@@ -11,12 +11,14 @@ import os
 def read(*rnames):
     return open(os.path.join(os.path.dirname(__file__), *rnames)).read()
 
-version = '0.2dev'
+version = '0.2'
 
 setup(name='niteoweb.fabfile',
       version=version,
       description="A bunch of Fabric commands we use all the time.",
-      long_description=read('README'),
+      long_description=read('README') +
+                       read('docs', 'HISTORY.rst') +
+                       read('docs', 'LICENSE.rst'),
       classifiers=[
         "Programming Language :: Python",
         ],

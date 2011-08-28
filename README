@@ -11,17 +11,28 @@ reusable.
 List of commands available (see their docstrings for usage help):
 
 * configure_nginx
-  * upload_configuration
-  * enable_configuration
+ 
+  - upload_configuration
+  - enable_configuration
+
 * download_code
+
 * prepare_buildout
+
 * run_buildout
+
 * upload_data
+
   * upload_zodb
   * upload_blobs
+
 * download_data
   * download_zodb
   * download_blobs
+
 * start_supervisord
+
 * supervisorctl
+
 * upload_sphinx
+
