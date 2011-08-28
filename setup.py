@@ -18,7 +18,6 @@ setup(name='niteoweb.fabfile',
       description="A bunch of Fabric commands we use all the time.",
       long_description=read('README'),
       classifiers=[
-        "Framework :: Fabric",
         "Programming Language :: Python",
         ],
       keywords='Fabric Python',
