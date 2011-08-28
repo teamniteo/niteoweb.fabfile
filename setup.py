@@ -2,7 +2,7 @@
 """Installer for this package."""
 
 from setuptools import setup
-#from setuptools import find_packages
+from setuptools import find_packages
 
 import os
 
@@ -26,10 +26,8 @@ setup(name='niteoweb.fabfile',
       author_email='info@niteoweb.com',
       url='http://www.niteoweb.com',
       license='BSD',
-#      packages=find_packages('src', exclude=['ez_setup']),
-#      namespace_packages=['niteoweb'],
-#      package_dir={'': 'src'},
-#      include_package_data=True,
+      packages=find_packages(exclude=['ez_setup']),
+      include_package_data=True,
       zip_safe=False,
       install_requires=[
           # list project dependencies
