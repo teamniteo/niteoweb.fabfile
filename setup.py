@@ -16,7 +16,7 @@ version = '0.2dev'
 setup(name='niteoweb.fabfile',
       version=version,
       description="A bunch of Fabric commands we use all the time.",
-      long_description=read('README.rst'),
+      long_description=read('README'),
       classifiers=[
         "Framework :: Fabric",
         "Programming Language :: Python",
