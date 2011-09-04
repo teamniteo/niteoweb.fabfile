@@ -11,6 +11,9 @@ from fabric.api import env
 from fabric.contrib.files import upload_template
 
 
+import os
+
+
 def _verify_env(params):
     for param in params:
         if not env.get(param):
@@ -59,7 +62,7 @@ def download_code():
 
     with cd('/home/%(prod_user)s' % env):
         sudo(
-            'svn export %(svn_params)s %(svn_url)s/%(svn_repo)s/%(svn_dir)s ./'% env,
+            'svn export %(svn_params)s %(svn_url)s/%(svn_repo)s/%(svn_dir)s ./' % env,
             user=env.prod_user
         )
 
@@ -69,7 +72,7 @@ def prepare_buildout():
     ``bin/buildout -c production.cfg`` to build a production environment.
     """
     _verify_env(['prod_user', ])
-    
+
     with cd('/home/%(prod_user)s' % env):
         sudo(
             'virtualenv -p python2.6 --no-site-packages ./',
@@ -83,7 +86,7 @@ def run_buildout():
     on the production server.
     """
     _verify_env(['prod_user', ])
-    
+
     with cd('/home/%(prod_user)s' % env):
         sudo('bin/buildout -c production.cfg', user=env.prod_user)
 
@@ -106,18 +109,22 @@ def upload_data():
 
 def upload_zodb():
     """Upload ZODB part of Zope's data to the server."""
-    _verify_env(['prod_user', 'path', ])    
-    
+    _verify_env(['prod_user', 'path', ])
+
     if not env.confirm:
         confirm("This will destroy the current Data.fs file on the server. " \
         "Are you sure you want to continue?")
-    
+
     with cd('/home/%(prod_user)s/var/filestorage' % env):
 
-        # upload Data.fs to server and move it to it's place
+        # remove temporary BLOBs from previous uploads
+        if exists('/tmp/Data.fs'):
+            sudo('rm -rf /tmp/Data.fs')
+
+        # upload Data.fs to server and set production user as it's owner
         upload_template(
-            '%(path)s/var/filestorage/Data.fs' % env,  # from
-            'Data.fs',                                 # to
+            filename='%(path)s/var/filestorage/Data.fs' % env,
+            destination='Data.fs',
             use_sudo=True
         )
         sudo('chown -R %(prod_user)s:%(prod_user)s Data.fs' % env)
@@ -125,7 +132,7 @@ def upload_zodb():
 
 def upload_blobs():
     """Upload BLOB part of Zope's data to the server."""
-    _verify_env(['prod_user', 'path', ])    
+    _verify_env(['prod_user', 'path', ])
 
     if not env.confirm:
         confirm("This will destroy all current BLOB files on the server. " \
@@ -149,10 +156,10 @@ def upload_blobs():
 
 
 def start_supervisord():
-    """Start `supervisord` process monitor which in turn starts Zope and 
+    """Start `supervisord` process monitor which in turn starts Zope and
     optionally others (Varnish, HAProxy, etc.)."""
     _verify_env(['prod_user', ])
-    
+
     with cd('/home/%(prod_user)s' % env):
         sudo('bin/supervisord', user=env.prod_user)
 
