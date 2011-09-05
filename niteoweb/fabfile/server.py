@@ -14,5 +14,6 @@ def install_rkhunter():
     sed('/etc/rkhunter.conf', 'me@mydomain   root@mydomain', 'maintenance@niteoweb.com', use_sudo=True)
 
     # ignore some Ubuntu specific files
+    uncomment('/etc/rkhunter.conf', '#ALLOWHIDDENDIR=\/dev\/.udev', use_sudo=True)
     uncomment('/etc/rkhunter.conf', '#ALLOWHIDDENDIR=\/dev\/.static', use_sudo=True)
     uncomment('/etc/rkhunter.conf', '#ALLOWHIDDENDIR=\/dev\/.initramfs', use_sudo=True)
