@@ -166,7 +166,6 @@ def start_supervisord():
 
 def supervisorctl(*cmd):
     """Runs an arbitrary supervisorctl command."""
-    import pdb; pdb.set_trace( )
     with cd('/home/%(prod_user)s' % env):
         sudo('bin/supervisorctl ' + ' '.join(cmd), user=env.prod_user)
 
