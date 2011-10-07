@@ -236,19 +236,19 @@ def download_data():
         local('rsync -az %(user)s@%(server)s:/tmp/blobstorage %(path)s/var/' % env)
 
 
-def add_to_bacula_master(project_name, local_conf_path=None, bacula_host_string=None):
+def add_to_bacula_master(shortname, bacula_conf=None, bacula_host_string=None):
     """Add project to Bacula master"""
+    opts = dict(
+        shortname=shortname or env.get('shortname'),
+        bacula_conf=bacula_conf or env.get('bacula_conf') or '%s/etc/bacula-master.conf' % os.getcwd()
+        bacula_host_string=bacula_host_string or env.get('bacula_host_string') or 'bacula.niteoweb.com:22'
+    )
+    _verify_opts(opts, ['shortname', ])
 
-    if not local_conf_path:
-        local_conf_path = '%(path)s/etc/bacula-master.conf' % env
-
-    if not bacula_host_string:
-        bacula_host_string = 'bacula.niteoweb.com:22'
-
-    with settings(host_string=bacula_host_string):
+    with settings(host_string=opts['bacula_host_string']):
 
         # upload project-specific configuration
-        upload_template(local_conf_path, '/etc/bacula/clients/%s.conf' % project_name, use_sudo=True)
+        upload_template(opts['bacula_conf'], '/etc/bacula/clients/%(shortname)s.conf' % opts, use_sudo=True)
 
         # reload bacula master configuration
         sudo("/etc/init.d/bacula-dir restart")
