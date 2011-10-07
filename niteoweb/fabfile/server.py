@@ -1,9 +1,11 @@
+from fabric.contrib.console import confirm
 from fabric.api import env
 from fabric.api import sudo
 from fabric.contrib.files import append
 from fabric.contrib.files import sed
 from fabric.contrib.files import uncomment
 from fabric.operations import prompt
+from fabric.api import settings
 
 
 def install_rkhunter():
@@ -42,3 +44,21 @@ def create_maintenance_user(admin):
 
     # set default password for initial login
     sudo('echo "%(admin)s:geslo123" | chpasswd' % env)
+
+
+def create_maintenance_users(password):
+    """Create maintenance accounts, so admins can use their own dedicate
+    maintenance accounts to access the server."""
+    env.password = password
+
+    if not env.maintenance_users:
+        raise("You must first set env.maintenance_users!")
+
+    with settings(user='root', password=env.temp_root_pass):
+
+        for user in env.maintenance_users:
+            create_maintenance_user(user, password=password)
+
+        confirm("Users %(maintenance_users)s were successfully created. Notify"
+                "them that they must login and change their default password "
+                "(%(password)s) with the ``passwd`` command. Proceed?" % env)
