@@ -1,77 +1,90 @@
 from fabric.api import cd
+from fabric.api import env
 from fabric.api import get
 from fabric.api import local
 from fabric.api import settings
+from fabric.api import sudo
 from fabric.contrib.console import confirm
 from fabric.contrib.files import exists
-from fabric.contrib.project import rsync_project
-
-from fabric.api import sudo
-from fabric.api import env
 from fabric.contrib.files import upload_template
-
+from fabric.contrib.project import rsync_project
 
 import os
 
 
-def _verify_env(params):
+def _verify_opts(opts, params):
     for param in params:
-        if not env.get(param):
-            raise AttributeError('env.%s is missing' % param)
+        if not opts.get(param):
+            raise AttributeError("opts['%s'] is missing" % param)
 
 
-def configure_nginx():
+def configure_nginx(shortname=None):
     """Upload Nginx configuration for this site to /etc/nginx/sites-available
     and enable it so it gets included in the main nginx.conf.
     """
 
-    upload_configuration()
-    enable_configuration()
+    upload_nginx_configuration(shortname)
+    enable_nginx_configuration(shortname)
 
 
-def upload_configuration():
+def upload_nginx_configuration(shortname=None, nginx_conf=None):
     """Upload Nginx configuration to /etc/nginx/sites-available."""
-    _verify_env(['path', 'shortname'])
+    opts = dict(
+        shortname=shortname or env.get('nginx_conf'),
+        nginx_conf=nginx_conf or env.get('nginx_conf') or '%s/etc/nginx.conf' % os.getcwd(),
+    )
+    _verify_opts(opts, ['shortname', ])
 
     upload_template(
-        '%(path)s/etc/nginx.conf' % env,
+        opts['nginx_conf'],
         '/etc/nginx/sites-available/%(shortname)s.conf' % env,
         use_sudo=True
     )
 
 
-def enable_configuration():
-    """Make a soft link from sites-available/ to sites-enabled/ and reload
-    Nginx.
-    """
-    _verify_env(['shortname', ])
+def enable_nginx_configuration(shortname=None):
+    """Make a link from sites-available/ to sites-enabled/ and reload Nginx."""
+    opts = dict(
+        shortname=shortname or env.get('shortname'),
+    )
+    _verify_opts(opts, ['shortname', ])
 
     sudo('ln -fs /etc/nginx/sites-available/%(shortname)s.conf '
-         '/etc/nginx/sites-enabled/%(shortname)s.conf' % env)
+         '/etc/nginx/sites-enabled/%(shortname)s.conf' % opts)
     sudo('service nginx reload')
 
 
-def download_code():
+def download_code(shortname=None, prod_user=None, svn_params=None, svn_url=None, svn_repo=None, svn_dir=None):
     """Pull project code from code repository."""
-    _verify_env(['prod_user', 'shortname', ])
+    opts = dict(
+        shortname=shortname or env.get('shortname'),
+        prod_user=prod_user or env.get('prod_user'),
+    )
+    _verify_opts(opts, ['shortname', 'prod_user', ])
 
-    env.svn_params = '--force --no-auth-cache'
-    env.svn_url = 'https://niteoweb.repositoryhosting.com/svn'
-    env.svn_repo = 'niteoweb_%(shortname)s' % env
-    env.svn_dir = 'niteoweb.%(shortname)s/trunk' % env
+    more_opts = dict(
+        svn_params=svn_params or env.get('svn_params') or '--force --no-auth-cache',
+        svn_url=svn_url or env.get('svn_url') or 'https://niteoweb.repositoryhosting.com/svn',
+        svn_repo=svn_repo or env.get('svn_repo') or 'niteoweb_%(shortname)s' % opts,
+        svn_dir=svn_dir or env.get('svn_dir') or 'niteoweb.%(shortname)s/trunk' % opts,
+    )
+    opts.update(more_opts)
 
-    with cd('/home/%(prod_user)s' % env):
+    with cd('/home/%(prod_user)s' % opts):
         sudo(
-            'svn export %(svn_params)s %(svn_url)s/%(svn_repo)s/%(svn_dir)s ./' % env,
-            user=env.prod_user
+            'svn export %(svn_params)s %(svn_url)s/%(svn_repo)s/%(svn_dir)s ./' % opts,
+            user=opts['prod_user']
         )
 
 
-def prepare_buildout():
+def prepare_buildout(prod_user=None):
     """Prepare zc.buildout environment so we can use
     ``bin/buildout -c production.cfg`` to build a production environment.
     """
-    _verify_env(['prod_user', ])
+    opts = dict(
+        prod_user=prod_user or env.get('prod_user'),
+    )
+    _verify_opts(opts, ['prod_user', ])
 
     with cd('/home/%(prod_user)s' % env):
         sudo(
@@ -81,41 +94,50 @@ def prepare_buildout():
         sudo('bin/python bootstrap.py -c production.cfg', user=env.prod_user)
 
 
-def run_buildout():
+def run_buildout(prod_user=None):
     """Run ``bin/buildout -c production.cfg`` in production user's home folder
     on the production server.
     """
-    _verify_env(['prod_user', ])
+    opts = dict(
+        prod_user=prod_user or env.get('prod_user'),
+    )
+    _verify_opts(opts, ['prod_user', ])
 
     with cd('/home/%(prod_user)s' % env):
         sudo('bin/buildout -c production.cfg', user=env.prod_user)
 
-    # allow everyone in group `projects` to use what you have just put put
-    # inside the egg-cache
+    # allow everyone in group `projects` to use what you have just put inside
+    # the egg cache
     sudo('chown -R root:projects /etc/buildout/{eggs,downloads,extends}')
     sudo('chmod -R 775 /etc/buildout/{eggs,downloads,extends}')
 
 
-def upload_data():
+def upload_data(prod_user=None):
     """Upload Zope's data to the server."""
 
-    confirm("This will destroy all current Zope data on the server. " \
-    "Are you sure you want to continue?")
-    env.confirm = True
+    if not env.get('confirm'):
+        confirm("This will destroy all current Zope data on the server. " \
+        "Are you sure you want to continue?")
 
-    upload_zodb()
-    upload_blobs()
+    upload_zodb(prod_user)
+    upload_blobs(prod_user)
 
 
-def upload_zodb():
+def upload_zodb(prod_user=None, path=None):
     """Upload ZODB part of Zope's data to the server."""
-    _verify_env(['prod_user', 'path', ])
+    opts = dict(
+        prod_user=prod_user or env.get('prod_user'),
+        path=path or env.get('path') or os.getcwd()
+    )
+    _verify_opts(opts, ['prod_user', 'path', ])
 
-    if not env.confirm:
+    # _verify_env(['prod_user', 'path', ])
+
+    if not env.get('confirm'):
         confirm("This will destroy the current Data.fs file on the server. " \
         "Are you sure you want to continue?")
 
-    with cd('/home/%(prod_user)s/var/filestorage' % env):
+    with cd('/home/%(prod_user)s/var/filestorage' % opts):
 
         # remove temporary BLOBs from previous uploads
         if exists('/tmp/Data.fs'):
@@ -123,22 +145,26 @@ def upload_zodb():
 
         # upload Data.fs to server and set production user as it's owner
         upload_template(
-            filename='%(path)s/var/filestorage/Data.fs' % env,
+            filename='%(path)s/var/filestorage/Data.fs' % opts,
             destination='Data.fs',
             use_sudo=True
         )
-        sudo('chown -R %(prod_user)s:%(prod_user)s Data.fs' % env)
+        sudo('chown -R %(prod_user)s:%(prod_user)s Data.fs' % opts)
 
 
-def upload_blobs():
+def upload_blobs(prod_user=None, path=None):
     """Upload BLOB part of Zope's data to the server."""
-    _verify_env(['prod_user', 'path', ])
+    opts = dict(
+        prod_user=prod_user or env.get('prod_user'),
+        path=path or env.get('path') or os.getcwd()
+    )
+    _verify_opts(opts, ['prod_user', 'path', ])
 
-    if not env.confirm:
+    if not env.get('confirm'):
         confirm("This will destroy all current BLOB files on the server. " \
         "Are you sure you want to continue?")
 
-    with cd('/home/%(prod_user)s/var' % env):
+    with cd('/home/%(prod_user)s/var' % opts):
 
         # backup current BLOBs
         if exists('blobstorage'):
@@ -149,16 +175,19 @@ def upload_blobs():
             sudo('rm -rf /tmp/blobstorage')
 
         # upload BLOBs to the server and move them to their place
-        rsync_project('/tmp', local_dir='%(path)s/var/blobstorage' % env)
+        rsync_project('/tmp', local_dir='%(path)s/var/blobstorage' % opts)
         sudo('mv /tmp/blobstorage ./')
-        sudo('chown -R %(prod_user)s:%(prod_user)s blobstorage' % env)
+        sudo('chown -R %(prod_user)s:%(prod_user)s blobstorage' % opts)
         sudo('chmod -R 700 blobstorage')
 
 
-def start_supervisord():
+def start_supervisord(prod_user=None):
     """Start `supervisord` process monitor which in turn starts Zope and
     optionally others (Varnish, HAProxy, etc.)."""
-    _verify_env(['prod_user', ])
+    opts = dict(
+        prod_user=prod_user or env.get('prod_user'),
+    )
+    _verify_opts(opts, ['prod_user', ])
 
     with cd('/home/%(prod_user)s' % env):
         sudo('bin/supervisord', user=env.prod_user)
@@ -173,8 +202,9 @@ def supervisorctl(*cmd):
 def download_data():
     """Download Zope's Data.fs from the server."""
 
-    confirm("This will destroy all current Zope data on your local machine. " \
-            "Are you sure you want to continue?")
+    if not env.get('confirm'):
+        confirm("This will destroy all current Zope data on your local machine. " \
+                "Are you sure you want to continue?")
 
     with cd('/home/%(prod_user)s/var' % env):
 
@@ -204,6 +234,24 @@ def download_data():
         sudo('rsync -a blobstorage /tmp/')
         sudo('chown -R %(user)s /tmp/blobstorage' % env)
         local('rsync -az %(user)s@%(server)s:/tmp/blobstorage %(path)s/var/' % env)
+
+
+def add_to_bacula_master(shortname, bacula_conf=None, bacula_host_string=None):
+    """Add project to Bacula master"""
+    opts = dict(
+        shortname=shortname or env.get('shortname'),
+        bacula_conf=bacula_conf or env.get('bacula_conf') or '%s/etc/bacula-master.conf' % os.getcwd()
+        bacula_host_string=bacula_host_string or env.get('bacula_host_string') or 'bacula.niteoweb.com:22'
+    )
+    _verify_opts(opts, ['shortname', ])
+
+    with settings(host_string=opts['bacula_host_string']):
+
+        # upload project-specific configuration
+        upload_template(opts['bacula_conf'], '/etc/bacula/clients/%(shortname)s.conf' % opts, use_sudo=True)
+
+        # reload bacula master configuration
+        sudo("/etc/init.d/bacula-dir restart")
 
 
 def upload_sphinx():
