@@ -100,7 +100,7 @@ def set_system_time(timezone=None):
     """Set timezone and install ``ntp`` to keep time accurate."""
 
     opts = dict(
-        timezone=timezone or env.get('timezone') or '/usr/share/zoneinfo/Etc/UTC',
+        timezone=timezone or env.get('timezone') or '/usr/share/zoneinfo/UTC',
     )
 
     # set timezone
