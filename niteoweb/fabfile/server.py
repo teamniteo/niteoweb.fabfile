@@ -9,6 +9,7 @@ from fabric.contrib.files import uncomment
 from fabric.contrib.files import upload_template
 from fabric.operations import prompt
 from fabric.contrib.files import comment
+from niteoweb.fabfile import err
 
 import os
 
@@ -59,20 +60,18 @@ def create_admin_account(admin, default_password=None):
     sudo('echo "%(admin)s:%(default_password)s" | chpasswd' % opts)
 
 
-def install_ufw(rules):
+def install_ufw(rules=None):
     """Install and configure Uncomplicated Firewall."""
     sudo('apt-get -yq install ufw')
     configure_ufw(rules)
 
 
-def configure_ufw(rules):
+def configure_ufw(rules=None):
     """Configure Uncomplicated Firewall."""
     # reset rules so we start from scratch
     sudo('ufw --force reset')
 
-    if not rules:
-        raise("You must give me some rules!")
-
+    rules = rules or env.rules or err("env.rules must be set"),
     for rule in rules:
         sudo(rule)
 
