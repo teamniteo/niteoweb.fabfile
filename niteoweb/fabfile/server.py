@@ -233,6 +233,24 @@ def configure_bacula_client(bacula_client_conf=None):
     sudo('service bacula-fd restart')
 
 
+def add_to_bacula_master(shortname=None, bacula_conf=None, bacula_host_string=None):
+    """Add this server's configuration to Bacula master"""
+    opts = dict(
+        shortname=shortname or env.get('shortname'),
+        bacula_conf=bacula_conf or env.get('bacula_conf') or '%s/etc/bacula-master.conf' % os.getcwd(),
+        bacula_host_string=bacula_host_string or env.get('bacula_host_string') or 'bacula.niteoweb.com:22',
+    )
+    _verify_opts(opts, ['shortname', ])
+
+    with settings(host_string=opts['bacula_host_string']):
+
+        # upload project-specific configuration
+        upload_template(opts['bacula_conf'], '/etc/bacula/clients/%(shortname)s.conf' % opts, use_sudo=True)
+
+        # reload bacula master configuration
+        sudo("/etc/init.d/bacula-dir restart")
+
+
 def configure_hetzner_backup(duplicityfilelist=None, duplicitysh=None):
     """Hetzner gives us 100GB of backup storage. Let's use it with
     Duplicity to backup the whole disk."""

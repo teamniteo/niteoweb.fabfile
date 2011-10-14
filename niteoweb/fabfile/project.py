@@ -22,7 +22,6 @@ def configure_nginx(shortname=None):
     """Upload Nginx configuration for this site to /etc/nginx/sites-available
     and enable it so it gets included in the main nginx.conf.
     """
-
     upload_nginx_configuration(shortname)
     enable_nginx_configuration(shortname)
 
@@ -234,24 +233,6 @@ def download_data():
         sudo('rsync -a blobstorage /tmp/')
         sudo('chown -R %(user)s /tmp/blobstorage' % env)
         local('rsync -az %(user)s@%(server)s:/tmp/blobstorage %(path)s/var/' % env)
-
-
-def add_to_bacula_master(shortname, bacula_conf=None, bacula_host_string=None):
-    """Add project to Bacula master"""
-    opts = dict(
-        shortname=shortname or env.get('shortname'),
-        bacula_conf=bacula_conf or env.get('bacula_conf') or '%s/etc/bacula-master.conf' % os.getcwd()
-        bacula_host_string=bacula_host_string or env.get('bacula_host_string') or 'bacula.niteoweb.com:22'
-    )
-    _verify_opts(opts, ['shortname', ])
-
-    with settings(host_string=opts['bacula_host_string']):
-
-        # upload project-specific configuration
-        upload_template(opts['bacula_conf'], '/etc/bacula/clients/%(shortname)s.conf' % opts, use_sudo=True)
-
-        # reload bacula master configuration
-        sudo("/etc/init.d/bacula-dir restart")
 
 
 def upload_sphinx():
