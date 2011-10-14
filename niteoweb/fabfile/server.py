@@ -8,9 +8,13 @@ from fabric.contrib.files import sed
 from fabric.contrib.files import uncomment
 from fabric.contrib.files import upload_template
 from fabric.operations import prompt
+from fabric.contrib.files import comment
 
 import os
 
+def normalize_rackspace():
+    """docstring for normalize_rackspace"""
+    comment('/etc/sudoers', 'Defaults    requiretty')
 
 def create_admin_accounts(admins=None, default_password=None):
     """Create admin accounts, so admins can access the server."""
