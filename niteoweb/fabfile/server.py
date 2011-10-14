@@ -90,8 +90,8 @@ def disable_root_login():
 def set_hostname(server_ip=None, hostname=None):
     """Set server's hostname."""
     opts = dict(
-        server_ip=server_ip,
-        hostname=hostname,
+        server_ip=server_ip or env.server_ip or err("env.server_ip must be set"),
+        hostname=hostname or env.hostname or err("env.hostname must be set"),
     )
 
     sudo('echo "\n%(server_ip)s %(hostname)s" >> /etc/hosts' % opts)
