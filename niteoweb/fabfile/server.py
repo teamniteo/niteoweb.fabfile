@@ -23,13 +23,13 @@ def create_admin_accounts(admins=None, default_password=None):
         default_password=default_password or env.get('default_password') or 'secret',
     )
 
-    for admin in admins:
+    for admin in opts["admins"]:
         create_admin_account(admin, default_password=default_password)
 
     if not env.get('confirm'):
         confirm("Users %(admins)s were successfully created. Notify"
                 "them that they must login and change their default password "
-                "(%(password)s) with the ``passwd`` command. Proceed?" % opts)
+                "(%(default_password)s) with the ``passwd`` command. Proceed?" % opts)
 
 
 def create_admin_account(admin, default_password=None):
@@ -50,7 +50,7 @@ def create_admin_account(admin, default_password=None):
     sudo("echo '%(pub)s' > /home/%(admin)s/.ssh/authorized_keys" % opts)
 
     # allow this user in sshd_config
-    append('AllowUsers %(admin)s@*' % opts, use_sudo=True)
+    append("/etc/ssh/sshd_config",'AllowUsers %(admin)s@*' % opts, use_sudo=True)
 
     # allow sudo for maintenance user by adding it to 'sudo' group
     sudo('gpasswd -a %(admin)s sudo' % opts)
