@@ -5,4 +5,4 @@ from niteoweb.fabfile.project import *
 
 
 def err(msg):
-    raise(msg)
+    raise AttributeError(msg)
