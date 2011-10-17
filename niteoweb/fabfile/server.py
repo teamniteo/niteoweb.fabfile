@@ -23,7 +23,7 @@ def normalize_rackspace():
 def create_admin_accounts(admins=None, default_password=None):
     """Create admin accounts, so admins can access the server."""
     opts = dict(
-        admins=admins or env.get('admins') or ['zupo', 'kunta', 'brodul'],
+        admins=admins or env.get('admins') or err("env.admins must be set"),
         default_password=default_password or env.get('default_password') or 'secret',
     )
 
