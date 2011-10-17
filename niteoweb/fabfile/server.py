@@ -63,6 +63,22 @@ def create_admin_account(admin, default_password=None):
     sudo('echo "%(admin)s:%(default_password)s" | chpasswd' % opts)
 
 
+def harden_sshd():
+    """Security harden sshd."""
+
+    # Disable password authentication
+    sed('/etc/ssh/sshd_config',
+        '#PasswordAuthentication yes',
+        'PasswordAuthentication no',
+        use_sudo=True)
+
+    # Deny root login
+    sed('/etc/ssh/sshd_config',
+        'PermitRootLogin yes',
+        'PermitRootLogin no',
+        use_sudo=True)
+
+
 def install_ufw(rules=None):
     """Install and configure Uncomplicated Firewall."""
     sudo('apt-get -yq install ufw')
