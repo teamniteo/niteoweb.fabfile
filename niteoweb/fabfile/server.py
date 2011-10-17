@@ -403,3 +403,26 @@ def install_mysql(default_password=None):
     sudo('mkdir /var/backups/mysql')
     password = prompt('Please enter your mysql root password so I can configure daily backups:')
     sudo("echo '0 7 * * * mysqldump -u root -p%s --all-databases | gzip > /var/backups/mysql/mysqldump_$(date +%%Y-%%m-%%d).sql.gz' > /etc/cron.d/mysqldump" % password)
+
+
+def install_munin_node(add_to_master=True):
+    """Install and configure Munin node, which gathers system information
+    and sends it to Munin master."""
+
+    # install munin-node
+    sudo('apt-get -yq install munin-node')
+
+    # add allow IP to munin-node.conf -> allow IP must be escaped REGEX-style
+    ip = '%(hq)s' % env
+    ip.replace('.', '\\\.')
+    sed('/etc/munin/munin-node.conf', '127\\\.0\\\.0\\\.1', '%s' % ip, use_sudo=True)
+    sudo('service munin-node restart')
+
+    # add node to munin-master on Headquarters server so
+    # system information is actually collected
+    if add_to_master:
+        with settings(host_string='%(hq)s:22' % env):
+            path = '/etc/munin/munin.conf'
+            append(path, '[%(hostname)s]' % env, use_sudo=True)
+            append(path, '    address %(server_ip)s' % env, use_sudo=True)
+            append(path, ' ', use_sudo=True)
