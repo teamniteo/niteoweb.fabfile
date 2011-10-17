@@ -74,7 +74,7 @@ def configure_ufw(rules=None):
     # reset rules so we start from scratch
     sudo('ufw --force reset')
 
-    rules = rules or env.rules or err("env.rules must be set"),
+    rules = rules or env.rules or err("env.rules must be set")
     for rule in rules:
         sudo(rule)
 
