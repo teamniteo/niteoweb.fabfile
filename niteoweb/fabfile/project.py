@@ -29,7 +29,7 @@ def configure_nginx(shortname=None):
 def upload_nginx_configuration(shortname=None, nginx_conf=None):
     """Upload Nginx configuration to /etc/nginx/sites-available."""
     opts = dict(
-        shortname=shortname or env.get('nginx_conf'),
+        shortname=shortname or env.get('shortname'),
         nginx_conf=nginx_conf or env.get('nginx_conf') or '%s/etc/nginx.conf' % os.getcwd(),
     )
     _verify_opts(opts, ['shortname', ])
