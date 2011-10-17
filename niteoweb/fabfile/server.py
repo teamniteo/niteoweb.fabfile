@@ -173,7 +173,22 @@ def install_unattended_upgrades(email=None):
     sudo('apt-get -yq install unattended-upgrades')
     sed('/etc/apt/apt.conf.d/50unattended-upgrades',
         '//Unattended-Upgrade::Mail "root@localhost";',
-        'Unattended-Upgrade::Mail "%(email)s";' % opts, use_sudo=True)
+        'Unattended-Upgrade::Mail "%(email)s";' % opts,
+        use_sudo=True)
+
+    sed('/etc/apt/apt.conf.d/10periodic',
+        'APT::Periodic::Download-Upgradeable-Packages "0";',
+        'APT::Periodic::Download-Upgradeable-Packages "1";',
+        use_sudo=True)
+
+    sed('/etc/apt/apt.conf.d/10periodic',
+        'APT::Periodic::AutocleanInterval "0";',
+        'APT::Periodic::AutocleanInterval "7";',
+        use_sudo=True)
+
+    append('/etc/apt/apt.conf.d/10periodic',
+           'APT::Periodic::Unattended-Upgrade "1";',
+           use_sudo=True)
 
 
 def raid_monitoring(email=None):
