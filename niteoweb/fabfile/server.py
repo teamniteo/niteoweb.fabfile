@@ -8,9 +8,14 @@ from fabric.contrib.files import sed
 from fabric.contrib.files import uncomment
 from fabric.contrib.files import upload_template
 from fabric.operations import prompt
+from fabric.contrib.files import comment
+from niteoweb.fabfile import err
 
 import os
 
+def normalize_rackspace():
+    """docstring for normalize_rackspace"""
+    comment('/etc/sudoers', 'Defaults    requiretty')
 
 def create_admin_accounts(admins=None, default_password=None):
     """Create admin accounts, so admins can access the server."""
@@ -19,13 +24,13 @@ def create_admin_accounts(admins=None, default_password=None):
         default_password=default_password or env.get('default_password') or 'secret',
     )
 
-    for admin in admins:
+    for admin in opts["admins"]:
         create_admin_account(admin, default_password=default_password)
 
     if not env.get('confirm'):
         confirm("Users %(admins)s were successfully created. Notify"
                 "them that they must login and change their default password "
-                "(%(password)s) with the ``passwd`` command. Proceed?" % opts)
+                "(%(default_password)s) with the ``passwd`` command. Proceed?" % opts)
 
 
 def create_admin_account(admin, default_password=None):
@@ -46,7 +51,7 @@ def create_admin_account(admin, default_password=None):
     sudo("echo '%(pub)s' > /home/%(admin)s/.ssh/authorized_keys" % opts)
 
     # allow this user in sshd_config
-    append('AllowUsers %(admin)s@*' % opts, use_sudo=True)
+    append("/etc/ssh/sshd_config",'AllowUsers %(admin)s@*' % opts, use_sudo=True)
 
     # allow sudo for maintenance user by adding it to 'sudo' group
     sudo('gpasswd -a %(admin)s sudo' % opts)
@@ -55,20 +60,18 @@ def create_admin_account(admin, default_password=None):
     sudo('echo "%(admin)s:%(default_password)s" | chpasswd' % opts)
 
 
-def install_ufw(rules):
+def install_ufw(rules=None):
     """Install and configure Uncomplicated Firewall."""
     sudo('apt-get -yq install ufw')
     configure_ufw(rules)
 
 
-def configure_ufw(rules):
+def configure_ufw(rules=None):
     """Configure Uncomplicated Firewall."""
     # reset rules so we start from scratch
     sudo('ufw --force reset')
 
-    if not rules:
-        raise("You must give me some rules!")
-
+    rules = rules or env.rules or err("env.rules must be set"),
     for rule in rules:
         sudo(rule)
 
@@ -87,8 +90,8 @@ def disable_root_login():
 def set_hostname(server_ip=None, hostname=None):
     """Set server's hostname."""
     opts = dict(
-        server_ip=server_ip,
-        hostname=hostname,
+        server_ip=server_ip or env.server_ip or err("env.server_ip must be set"),
+        hostname=hostname or env.hostname or err("env.hostname must be set"),
     )
 
     sudo('echo "\n%(server_ip)s %(hostname)s" >> /etc/hosts' % opts)
