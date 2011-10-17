@@ -54,7 +54,7 @@ def create_admin_account(admin, default_password=None):
     sudo("echo '%(pub)s' > /home/%(admin)s/.ssh/authorized_keys" % opts)
 
     # allow this user in sshd_config
-    append("/etc/ssh/sshd_config",'AllowUsers %(admin)s@*' % opts, use_sudo=True)
+    append("/etc/ssh/sshd_config", 'AllowUsers %(admin)s@*' % opts, use_sudo=True)
 
     # allow sudo for maintenance user by adding it to 'sudo' group
     sudo('gpasswd -a %(admin)s sudo' % opts)
