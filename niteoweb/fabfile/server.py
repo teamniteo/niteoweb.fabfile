@@ -14,9 +14,11 @@ from niteoweb.fabfile import err
 
 import os
 
+
 def normalize_rackspace():
     """docstring for normalize_rackspace"""
     comment('/etc/sudoers', 'Defaults    requiretty')
+
 
 def create_admin_accounts(admins=None, default_password=None):
     """Create admin accounts, so admins can access the server."""
