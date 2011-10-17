@@ -7,6 +7,7 @@ from fabric.contrib.files import exists
 from fabric.contrib.files import sed
 from fabric.contrib.files import uncomment
 from fabric.contrib.files import upload_template
+from fabric.context_managers import settings
 from fabric.operations import prompt
 from fabric.contrib.files import comment
 from niteoweb.fabfile import err
