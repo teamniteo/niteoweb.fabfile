@@ -242,11 +242,10 @@ def configure_bacula_client(bacula_client_conf=None):
 def add_to_bacula_master(shortname=None, bacula_conf=None, bacula_host_string=None):
     """Add this server's configuration to Bacula master"""
     opts = dict(
-        shortname=shortname or env.get('shortname'),
+        shortname=shortname or env.get('shortname') or err('env.shortname must be set'),
         bacula_conf=bacula_conf or env.get('bacula_conf') or '%s/etc/bacula-master.conf' % os.getcwd(),
         bacula_host_string=bacula_host_string or env.get('bacula_host_string') or 'bacula.niteoweb.com:22',
     )
-    _verify_opts(opts, ['shortname', ])
 
     with settings(host_string=opts['bacula_host_string']):
 
