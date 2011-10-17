@@ -167,7 +167,7 @@ def install_system_libs(additional_libs=None):
 def install_unattended_upgrades(email=None):
     """Configure Ubuntu to automatically install security updates."""
     opts = dict(
-        email=email or env.get('email') or 'maintenance@niteoweb.com',
+        email=email or env.get('email') or err('env.email must be set'),
     )
 
     sudo('apt-get -yq install unattended-upgrades')
@@ -180,7 +180,7 @@ def raid_monitoring(email=None):
     """Configure monitoring of our RAID-1 field. If anything goes wrong,
     send an email!"""
     opts = dict(
-        email=email or env.get('email') or 'maintenance@niteoweb.com',
+        email=email or env.get('email') or err('env.email must be set'),
     )
 
     # enable email notifications from mdadm raid monitor
@@ -216,13 +216,13 @@ def install_sendmail(email=None):
     """Prepare a localhost SMTP server for sending out system notifications
     to admins."""
     opts = dict(
-        email=email or env.get('email') or 'maintenance@niteoweb.com',
+        email=email or env.get('email') or err('env.email must be set'),
     )
 
     # install sendmail
     sudo('apt-get -yq install sendmail')
 
-    # all email should be sent to maintenance@niteoweb.com
+    # all email should be sent to maintenance email
     append('/etc/aliases', 'root:           %(email)s' % opts, use_sudo=True)
 
 
@@ -300,7 +300,7 @@ def configure_hetzner_backup(duplicityfilelist=None, duplicitysh=None):
 def install_rkhunter(email=None):
     """Install and configure RootKit Hunter."""
     opts = dict(
-        email=email or env.get('email') or 'maintenance@niteoweb.com',
+        email=email or env.get('email') or err('env.email must be set'),
     )
 
     # install RKHunter
