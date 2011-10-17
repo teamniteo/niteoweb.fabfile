@@ -33,6 +33,7 @@ setup(name='niteoweb.fabfile',
       install_requires=[
           # list project dependencies
           'Fabric',
+          'cuisine',
           'setuptools',
       ],
       )
