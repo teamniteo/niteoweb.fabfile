@@ -487,7 +487,7 @@ def add_to_bacula_master(shortname=None, path=None, bacula_host_string=None):
 
         # upload project-specific configuration
         upload_template(
-            '%s/etc/bacula-master.conf' % opts,
+            '%(path)s/etc/bacula-master.conf' % opts,
             '/etc/bacula/clients/%(shortname)s.conf' % opts,
             use_sudo=True)
 
