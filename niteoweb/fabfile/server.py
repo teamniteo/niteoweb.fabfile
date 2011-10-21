@@ -420,7 +420,15 @@ def install_bacula_master():
     sudo('add-apt-repository ppa:mario-sitz/ppa')
     sudo('apt-get update')
     sudo('apt-get -yq install bacula-console bacula-director-pgsql bacula-sd-pgsql')
+
+    # folder and files that are expected to be there
+    with mode_sudo():
+        dir_ensure('/etc/bacula/clients/')
+    sudo('touch /etc/bacula/clients/remove_me_once_deployed.conf')
+    sudo('chown -R bacula /etc/bacula/clients/')
+
     configure_bacula_master()
+
 
 def configure_bacula_master(path=None):
     """Upload configuration files for Bacula Master."""
@@ -430,6 +438,12 @@ def configure_bacula_master(path=None):
 
     upload_template('%(path)s/etc/bacula-dir.conf' % opts,
                     '/etc/bacula/bacula-dir.conf',
+                    use_sudo=True)
+    upload_template('%(path)s/etc/bacula-sd.conf' % opts,
+                    '/etc/bacula/bacula-sd.conf',
+                    use_sudo=True)
+    upload_template('%(path)s/etc/bconsole.conf' % opts,
+                    '/etc/bacula/bconsole.conf',
                     use_sudo=True)
     upload_template('%(path)s/etc/pool_defaults.conf' % opts,
                     '/etc/bacula/pool_defaults.conf',
@@ -456,10 +470,6 @@ def install_bacula_client():
     sudo('add-apt-repository ppa:mario-sitz/ppa')
     sudo('apt-get update')
     sudo('apt-get -yq install bacula-fd')
-
-    # this folder is needed
-    with mode_sudo():
-        dir_ensure('/var/spool/bacula', recursive=True)
 
     configure_bacula_client()
 
