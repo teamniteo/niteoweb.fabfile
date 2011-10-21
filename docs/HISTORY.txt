@@ -10,7 +10,8 @@ Changelog
 0.1.2 (2011-10-21)
 ------------------
 
-- Nothing changed yet.
+- Added many new commands for setting up servers.
+  [zupo]
 
 
 0.1.1 (2011-08-28)
