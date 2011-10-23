@@ -17,11 +17,11 @@ def configure_nginx(shortname=None):
     """Upload Nginx configuration for this site to /etc/nginx/sites-available
     and enable it so it gets included in the main nginx.conf.
     """
-    upload_nginx_configuration(shortname)
-    enable_nginx_configuration(shortname)
+    upload_nginx_config(shortname)
+    enable_nginx_config(shortname)
 
 
-def upload_nginx_configuration(shortname=None, nginx_conf=None):
+def upload_nginx_config(shortname=None, nginx_conf=None):
     """Upload Nginx configuration to /etc/nginx/sites-available."""
     opts = dict(
         shortname=shortname or env.get('shortname'),
@@ -35,7 +35,7 @@ def upload_nginx_configuration(shortname=None, nginx_conf=None):
     )
 
 
-def enable_nginx_configuration(shortname=None):
+def enable_nginx_config(shortname=None):
     """Make a link from sites-available/ to sites-enabled/ and reload Nginx."""
     opts = dict(
         shortname=shortname or env.get('shortname'),
