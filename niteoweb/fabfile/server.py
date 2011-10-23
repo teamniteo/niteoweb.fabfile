@@ -64,6 +64,26 @@ def create_admin_account(admin, default_password=None):
     sudo('echo "%(admin)s:%(default_password)s" | chpasswd' % opts)
 
 
+def create_project_user(prod_user):
+    """Add a user for a single project so the entire project can run under this
+    user."""
+
+    opts = dict(
+        prod_user=prod_user or env.prod_user or err("env.prod_user must be set"),
+    )
+
+    # create user
+    sudo('egrep %(prod_user)s /etc/passwd || adduser %(prod_user)s --disabled-password --gecos ""' % opts)
+
+    # add user to `projects` group
+    sudo('gpasswd -a %(prod_user)s projects' % opts)
+
+    # make use of buildout default.cfg
+    sudo('mkdir /home/%(prod_user)s/.buildout' % opts)
+    sudo('ln -s /etc/buildout/default.cfg /home/%(prod_user)s/.buildout/default.cfg' % opts)
+    sudo('chown -R %(prod_user)s:%(prod_user)s /home/%(prod_user)s/.buildout' % opts)
+
+
 def harden_sshd():
     """Security harden sshd."""
 
