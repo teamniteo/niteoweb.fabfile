@@ -8,14 +8,9 @@ from fabric.contrib.console import confirm
 from fabric.contrib.files import exists
 from fabric.contrib.files import upload_template
 from fabric.contrib.project import rsync_project
+from niteoweb.fabfile import err
 
 import os
-
-
-def _verify_opts(opts, params):
-    for param in params:
-        if not opts.get(param):
-            raise AttributeError("opts['%s'] is missing" % param)
 
 
 def configure_nginx(shortname=None):
@@ -32,7 +27,6 @@ def upload_nginx_configuration(shortname=None, nginx_conf=None):
         shortname=shortname or env.get('shortname'),
         nginx_conf=nginx_conf or env.get('nginx_conf') or '%s/etc/nginx.conf' % os.getcwd(),
     )
-    _verify_opts(opts, ['shortname', ])
 
     upload_template(
         opts['nginx_conf'],
@@ -46,7 +40,6 @@ def enable_nginx_configuration(shortname=None):
     opts = dict(
         shortname=shortname or env.get('shortname'),
     )
-    _verify_opts(opts, ['shortname', ])
 
     sudo('ln -fs /etc/nginx/sites-available/%(shortname)s.conf '
          '/etc/nginx/sites-enabled/%(shortname)s.conf' % opts)
@@ -59,7 +52,6 @@ def download_code(shortname=None, prod_user=None, svn_params=None, svn_url=None,
         shortname=shortname or env.get('shortname'),
         prod_user=prod_user or env.get('prod_user'),
     )
-    _verify_opts(opts, ['shortname', 'prod_user', ])
 
     more_opts = dict(
         svn_params=svn_params or env.get('svn_params') or '--force --no-auth-cache',
@@ -83,7 +75,6 @@ def prepare_buildout(prod_user=None):
     opts = dict(
         prod_user=prod_user or env.get('prod_user'),
     )
-    _verify_opts(opts, ['prod_user', ])
 
     with cd('/home/%(prod_user)s' % env):
         sudo(
@@ -100,7 +91,6 @@ def run_buildout(prod_user=None):
     opts = dict(
         prod_user=prod_user or env.get('prod_user'),
     )
-    _verify_opts(opts, ['prod_user', ])
 
     with cd('/home/%(prod_user)s' % env):
         sudo('bin/buildout -c production.cfg', user=env.prod_user)
@@ -128,7 +118,6 @@ def upload_zodb(prod_user=None, path=None):
         prod_user=prod_user or env.get('prod_user'),
         path=path or env.get('path') or os.getcwd()
     )
-    _verify_opts(opts, ['prod_user', 'path', ])
 
     # _verify_env(['prod_user', 'path', ])
 
@@ -157,7 +146,6 @@ def upload_blobs(prod_user=None, path=None):
         prod_user=prod_user or env.get('prod_user'),
         path=path or env.get('path') or os.getcwd()
     )
-    _verify_opts(opts, ['prod_user', 'path', ])
 
     if not env.get('confirm'):
         confirm("This will destroy all current BLOB files on the server. " \
@@ -186,7 +174,6 @@ def start_supervisord(prod_user=None):
     opts = dict(
         prod_user=prod_user or env.get('prod_user'),
     )
-    _verify_opts(opts, ['prod_user', ])
 
     with cd('/home/%(prod_user)s' % env):
         sudo('bin/supervisord', user=env.prod_user)
