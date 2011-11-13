@@ -1,10 +1,11 @@
 Changelog
 =========
     
-y (unreleased)
---------------
+2.0.1 (2011-11-13)
+------------------
 
-- Nothing changed yet.
+- HISTORY.txt missing from release.
+  [zupo]
 
 
 2.0 (2011-11-13)

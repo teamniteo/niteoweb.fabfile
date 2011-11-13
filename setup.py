@@ -11,7 +11,7 @@ import os
 def read(*rnames):
     return open(os.path.join(os.path.dirname(__file__), *rnames)).read()
 
-version = 'ydev'
+version = '2.0.1'
 
 setup(name='niteoweb.fabfile',
       version=version,
