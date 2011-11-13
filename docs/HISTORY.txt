@@ -1,8 +1,8 @@
 Changelog
 =========
     
-0.2 (unreleased)
-------------------
+2.0 (2011-11-13)
+----------------
 
 - Use niteoweb.fabfile.err instead of _verify_opts.
   [zupo]
