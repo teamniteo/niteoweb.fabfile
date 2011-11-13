@@ -68,17 +68,18 @@ def download_code(shortname=None, prod_user=None, svn_params=None, svn_url=None,
         )
 
 
-def prepare_buildout(prod_user=None):
+def prepare_buildout(prod_user=None, python_version=None):
     """Prepare zc.buildout environment so we can use
     ``bin/buildout -c production.cfg`` to build a production environment.
     """
     opts = dict(
         prod_user=prod_user or env.get('prod_user'),
+        python_version=python_version or env.get('python_version') or '2.6',
     )
 
     with cd('/home/%(prod_user)s' % env):
         sudo(
-            'virtualenv -p python2.6 --no-site-packages ./',
+            'virtualenv -p python%(python_version)s --no-site-packages ./' % opts,
             user=env.prod_user
         )
         sudo('bin/python bootstrap.py -c production.cfg', user=env.prod_user)
