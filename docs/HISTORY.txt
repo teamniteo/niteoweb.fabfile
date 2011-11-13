@@ -1,6 +1,12 @@
 Changelog
 =========
     
+y (unreleased)
+--------------
+
+- Nothing changed yet.
+
+
 2.0 (2011-11-13)
 ----------------
 
