@@ -9,12 +9,6 @@ hardcoded internal stuff, so they are not really usable out-of-the-box, more so
 as a point of reference. If there is interest, we'll rewrite them to be more
 reusable.
 
-Some of commands available (see their docstrings for usage help):
-
-* configure_nginx
-* prepare_buildout
-* run_buildout
-* upload_data
-* download_data
-* start_supervisord
-* upload_sphinx
+* `Source code @ GitHub <http://github.com/niteoweb/niteoweb.fabfile>`_
+* `Releases @ PyPI <http://pypi.python.org/pypi/niteoweb.fabfile>`_
+* `Sphinx docs @ ReadTheDocs <http://readthedocs.org/docs/niteowebfabfile>`_
