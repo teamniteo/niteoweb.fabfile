@@ -252,7 +252,7 @@ def configure_egg_cache():
     sudo('chmod -R 775 /etc/buildout/{eggs,downloads,extends}')
 
     # force maintenance users to also use default.cfg (needed when running buildout via Fabric)
-    for user in env.maintenance_users:
+    for user in env.admins:
         sudo('mkdir /home/%s/.buildout' % user)
         sudo('ln -s /etc/buildout/default.cfg /home/%s/.buildout/default.cfg' % user)
         sudo('chown -R %s /home/%s/.buildout' % (user, user))
