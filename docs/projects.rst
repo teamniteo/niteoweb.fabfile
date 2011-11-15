@@ -62,7 +62,6 @@ group to set up a Projects server (based on Ubuntu 10.04).
         # bootstrap server
         set_hostname()
         set_system_time()
-        install_system_libs()
         install_unattended_upgrades()
         raid_monitoring()
         install_rkhunter()
