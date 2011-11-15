@@ -16,6 +16,11 @@ from cuisine import mode_sudo
 import os
 
 
+def cmd(*cmd):
+    """Execute an arbitrary command on the server. Example ``bin/fab run:"uname -a"``."""
+    sudo(' '.join(cmd))
+
+
 def normalize_rackspace():
     """docstring for normalize_rackspace"""
     comment('/etc/sudoers', 'Defaults    requiretty')
@@ -62,6 +67,12 @@ def create_admin_account(admin, default_password=None):
 
     # set default password for initial login
     sudo('echo "%(admin)s:%(default_password)s" | chpasswd' % opts)
+
+
+def create_projects_group():
+    """Create a group that will hold all project users -> users
+    that are dedicated for running one project."""
+    sudo('addgroup projects')
 
 
 def create_project_user(prod_user):
@@ -161,28 +172,90 @@ def install_system_libs(additional_libs=None):
         additional_libs=additional_libs or env.get('additional_libs') or '',
     )
 
+    sudo('apt-get update')
     sudo('apt-get -yq install '
 
              # tools
              'lynx '
              'curl '
              'rsync '
+             'unzip '
+             'screen '
              'telnet '
+             'subversion '
              'build-essential '
              'python-software-properties '  # to get add-apt-repositories command
 
              # imaging, fonts, compression, encryption, etc.
+             'libbz2-dev '
+             'libfreetype6-dev '
              'libjpeg-dev '
              'libjpeg62-dev '
-             'libfreetype6-dev '
-             'zlib1g-dev '
+             'libldap-dev '
+             'libpcre3-dev '
              'libreadline5-dev '
-             'zlib1g-dev '
-             'libbz2-dev '
+             'libsasl2-dev '
              'libssl-dev '
-             'libjpeg62-dev '
+             'libxml2-dev '
+             'libxslt-dev '
+             'pkg-config '
+             'zlib1g-dev '
              '%(additional_libs)s' % opts
              )
+
+
+def install_python_26():
+    """Install Python 2.6 and tools for it."""
+    # Python 2.6 is already installed by default, we just add compile headers
+    sudo('apt-get -yq install python2.6-dev')
+
+    # install Distribute
+    sudo('curl -O http://python-distribute.org/distribute_setup.py')
+    sudo('python2.6 distribute_setup.py')
+    sudo('rm -f distribute*')
+
+    # install virtualenv
+    sudo('easy_install-2.6 virtualenv')
+
+
+def install_python_24():
+    """Install Python 2.4 and tools for it."""
+
+    sudo('add-apt-repository ppa:fkrull/deadsnakes')
+    sudo('apt-get update')
+    sudo('apt-get -yq install python2.4-dev')
+
+    # install Distribute
+    sudo('curl -O http://python-distribute.org/distribute_setup.py')
+    sudo('python2.4 distribute_setup.py')
+    sudo('rm -f distribute*')
+
+    # install virtualenv
+    sudo('easy_install-2.4 virtualenv')
+
+
+def configure_egg_cache():
+    """Configure a system-wide egg-cache so we have a local cache
+    of eggs that we use in order to add speed and reduncancy to
+    zc.buildout."""
+
+    sudo('mkdir /etc/buildout/')
+    sudo('mkdir /etc/buildout/{downloads,eggs,extends}')
+    sudo('touch /etc/buildout/default.cfg')
+    sudo('echo "[buildout]" >> /etc/buildout/default.cfg')
+    sudo('echo "eggs-directory = /etc/buildout/eggs" >> /etc/buildout/default.cfg')
+    sudo('echo "download-cache = /etc/buildout/downloads" >> /etc/buildout/default.cfg')
+    sudo('echo "extends-cache = /etc/buildout/extends" >> /etc/buildout/default.cfg')
+
+    # allow group `projects` to read/write in here
+    sudo('chown -R root:projects /etc/buildout/{eggs,downloads,extends}')
+    sudo('chmod -R 775 /etc/buildout/{eggs,downloads,extends}')
+
+    # force maintenance users to also use default.cfg (needed when running buildout via Fabric)
+    for user in env.maintenance_users:
+        sudo('mkdir /home/%s/.buildout' % user)
+        sudo('ln -s /etc/buildout/default.cfg /home/%s/.buildout/default.cfg' % user)
+        sudo('chown -R %s /home/%s/.buildout' % (user, user))
 
 
 def install_unattended_upgrades(email=None):
