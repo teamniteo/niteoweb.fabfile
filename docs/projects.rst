@@ -7,7 +7,7 @@ prerequisite to have before you can run any commands from the `Project` group
 of commands.
 
 Below is a ``fabfile.py.in`` buildout template that uses commands from `Server`
-group to set up a Projects server based on Ubuntu 10.04.
+group to set up a Projects server (based on Ubuntu 10.04).
 
 .. sourcecode:: python
 
@@ -157,7 +157,6 @@ to prepare an environment for using this ``fabfile.py.in``. Save the
 Samples of config files that you need to put inside ``etc/`` directory in your
 buildout:
 
- * :download:`nginx.conf.in <nginx.conf.in>`.
  * :download:`bacula-fd.conf.in <bacula-fd.conf.in>`.
  * :download:`bacula-master.conf.in <bacula-master.conf.in>`.
  * :download:`duplicity.sh.in <duplicity.sh.in>`.
