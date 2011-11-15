@@ -1,6 +1,18 @@
 Changelog
 =========
 
+2.1 (unreleased)
+----------------
+
+- Added instructions and examples on how to use niteoweb.fabfile for setting up
+  a new server for running Plone projects.
+  [zupo]
+
+- Added commands for installing and configuring a server that will run Plone
+  projects.
+  [zupo]
+
+
 2.0.2 (2011-11-13)
 ------------------
 
