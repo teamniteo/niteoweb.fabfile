@@ -8,31 +8,14 @@ internal stuff, so they are not really usable out-of-the-box, more so as a
 point of reference. If there is interest, we'll rewrite them to be more
 reusable.
 
-List of commands available (see their docstrings for usage help):
+Some of commands available (see their docstrings for usage help):
 
 * configure_nginx
- 
-  - upload_configuration
-  - enable_configuration
-
-* download_code
-
 * prepare_buildout
-
 * run_buildout
-
 * upload_data
-
-  * upload_zodb
-  * upload_blobs
-
 * download_data
-  * download_zodb
-  * download_blobs
-
 * start_supervisord
-
-* supervisorctl
-
 * upload_sphinx
 
+See `niteoweb/fabfile/docs/README.rst <https://github.com/nzupan/niteoweb.fabfile/blob/master/niteoweb/fabfile/docs/README.rst>`_ for more info.
