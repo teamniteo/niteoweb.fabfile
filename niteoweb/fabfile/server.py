@@ -239,8 +239,11 @@ def configure_egg_cache():
     of eggs that we use in order to add speed and reduncancy to
     zc.buildout."""
 
-    sudo('mkdir /etc/buildout/')
-    sudo('mkdir /etc/buildout/{downloads,eggs,extends}')
+    dir_ensure('/etc/buildout/')
+    dir_ensure('/etc/buildout/{downloads,eggs,extends}')
+    if exists('/etc/buildout/default.cfg'):
+        sudo('rm -rf /etc/buildout/default.cfg')
+
     sudo('touch /etc/buildout/default.cfg')
     sudo('echo "[buildout]" >> /etc/buildout/default.cfg')
     sudo('echo "eggs-directory = /etc/buildout/eggs" >> /etc/buildout/default.cfg')
@@ -253,7 +256,10 @@ def configure_egg_cache():
 
     # force maintenance users to also use default.cfg (needed when running buildout via Fabric)
     for user in env.admins:
-        sudo('mkdir /home/%s/.buildout' % user)
+        dir_ensure('/home/%s/.buildout' % user)
+        if exists('/home/%s/.buildout/default.cfg' % user):
+            sudo('rm -rf /home/%s/.buildout/default.cfg' % user)
+
         sudo('ln -s /etc/buildout/default.cfg /home/%s/.buildout/default.cfg' % user)
         sudo('chown -R %s /home/%s/.buildout' % (user, user))
 
