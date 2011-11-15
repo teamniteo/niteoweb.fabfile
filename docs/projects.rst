@@ -50,7 +50,7 @@ group to set up a Projects server (based on Ubuntu 10.04).
         server. Use this command only on a vanilla Ubuntu 10.04 server."""
 
         with settings(user='root', password=env.temp_root_pass):
-            create_admin_accounts(default_password='geslo123')
+            create_admin_accounts(default_password='secret123')
 
         create_projects_group()
 
