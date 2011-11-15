@@ -124,6 +124,8 @@ to prepare an environment for using this ``fabfile.py.in``. Save the
     duplicity = strong_password_here
     hetzner_ftp_user = whatever_hetzner_gives_you
     hetzner_ftp_pass = whatever_hetzner_gives_you
+    temp_root = root_password_that_hetzner_gives_you_for_a_new_server
+    # temp_root password is changed and disabled later on in deployment
 
     # Pin versions of niteoweb.fabfile and other dependencies
     [versions]
