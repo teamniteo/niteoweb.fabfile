@@ -68,33 +68,35 @@ def download_code(shortname=None, prod_user=None, svn_params=None, svn_url=None,
         )
 
 
-def prepare_buildout(prod_user=None, python_version=None):
+def prepare_buildout(prod_user=None, python_version=None, production_cfg=None):
     """Prepare zc.buildout environment so we can use
     ``bin/buildout -c production.cfg`` to build a production environment.
     """
     opts = dict(
         prod_user=prod_user or env.get('prod_user'),
         python_version=python_version or env.get('python_version') or '2.6',
+        production_cfg=production_cfg or env.get('production_cfg') or 'production.cfg',
     )
 
-    with cd('/home/%(prod_user)s' % env):
+    with cd('/home/%(prod_user)s' % opts):
         sudo(
             'virtualenv -p python%(python_version)s --no-site-packages ./' % opts,
             user=env.prod_user
         )
-        sudo('bin/python bootstrap.py -c production.cfg', user=env.prod_user)
+        sudo('bin/python bootstrap.py -c %(production_cfg)s' % opts, user=env.prod_user)
 
 
-def run_buildout(prod_user=None):
+def run_buildout(prod_user=None, production_cfg=None):
     """Run ``bin/buildout -c production.cfg`` in production user's home folder
     on the production server.
     """
     opts = dict(
         prod_user=prod_user or env.get('prod_user'),
+        production_cfg=production_cfg or env.get('production_cfg') or 'production.cfg',
     )
 
-    with cd('/home/%(prod_user)s' % env):
-        sudo('bin/buildout -c production.cfg', user=env.prod_user)
+    with cd('/home/%(prod_user)s' % opts):
+        sudo('bin/buildout -c %(production_cfg)s' % opts, user=env.prod_user)
 
     # allow everyone in group `projects` to use what you have just put inside
     # the egg cache
@@ -176,13 +178,13 @@ def start_supervisord(prod_user=None):
         prod_user=prod_user or env.get('prod_user'),
     )
 
-    with cd('/home/%(prod_user)s' % env):
+    with cd('/home/%(prod_user)s' % opts):
         sudo('bin/supervisord', user=env.prod_user)
 
 
 def supervisorctl(*cmd):
     """Runs an arbitrary supervisorctl command."""
-    with cd('/home/%(prod_user)s' % env):
+    with cd('/home/%(prod_user)s' % opts):
         sudo('bin/supervisorctl ' + ' '.join(cmd), user=env.prod_user)
 
 
