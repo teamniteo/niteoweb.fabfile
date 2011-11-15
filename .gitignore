@@ -1,0 +1,8 @@
+.installed.cfg
+bin/
+develop-eggs
+docs/doctrees
+docs/html
+docs/make.bat
+include
+lib
