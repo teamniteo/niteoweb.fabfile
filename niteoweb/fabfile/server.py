@@ -176,6 +176,7 @@ def install_system_libs(additional_libs=None):
     sudo('apt-get -yq install '
 
              # tools
+             'gitk '
              'lynx '
              'curl '
              'rsync '
