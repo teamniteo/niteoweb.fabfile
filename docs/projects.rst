@@ -163,4 +163,5 @@ buildout:
  * :download:`bacula-fd.conf.in <bacula-fd.conf.in>`.
  * :download:`bacula-master.conf.in <bacula-master.conf.in>`.
  * :download:`duplicity.sh.in <duplicity.sh.in>`.
+ * :download:`duplicityfilelist.conf <duplicityfilelist.conf>`.
  * :download:`nginx.conf <nginx.conf>`.
