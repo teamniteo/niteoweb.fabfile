@@ -27,6 +27,8 @@ Changelog
   projects.
   [zupo]
 
+- Added Sphinx documentation.
+  [zupo]
 
 2.0.2 (2011-11-13)
 ------------------
