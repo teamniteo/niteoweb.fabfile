@@ -1,0 +1,57 @@
+Client {
+  Name = ${config:shortname}-fd
+  Address = ${config:hostname}
+  FDPort = ${ports:bacula}
+  Catalog = Catalog
+  Password = ${config:bacula_password}
+}
+FileSet {
+  Name = "${config:shortname} set"
+  Include {
+    Options {
+      signature = SHA1
+      compression = GZIP1
+      noatime = yes
+    }
+    File = /etc/buildout
+    File = /etc/nginx
+    File = /var/backups/postgresql
+
+    # Plone 4 sites
+    File = /home/some_project/var/backups
+    File = /home/some_project/var/blobstorage
+
+    # Plone 3 sites
+    File = /home/some_other_project/var/backups
+  }
+}
+Job {
+  Name = backup-${config:shortname}
+  JobDefs = DefaultJob
+  Client = ${config:shortname}-fd
+  Storage = File
+  Level = Incremental
+  Pool = Default
+  Full Backup Pool = ${config:shortname}-full
+  Differential Backup Pool = ${config:shortname}-diff
+  Incremental Backup Pool = ${config:shortname}-inc
+  FileSet = "${config:shortname} set"
+}
+Pool {
+  Name = ${config:shortname}-full
+  Label Format = ${config:shortname}-full-
+  @/etc/bacula/pool_defaults.conf
+  @/etc/bacula/pool_full_defaults.conf
+}
+Pool {
+  Name = ${config:shortname}-diff
+  Label Format = ${config:shortname}-diff-
+  @/etc/bacula/pool_defaults.conf
+  @/etc/bacula/pool_diff_defaults.conf
+}
+Pool {
+  Name = ${config:shortname}-inc
+  Label Format = ${config:shortname}-inc-
+  @/etc/bacula/pool_defaults.conf
+  @/etc/bacula/pool_inc_defaults.conf
+}
