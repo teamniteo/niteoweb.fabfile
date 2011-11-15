@@ -4,6 +4,21 @@ Changelog
 2.1 (unreleased)
 ----------------
 
+- Lots of minor bugfixes.
+  [zupo]
+
+- Added `gitk` to list of libraries to install.
+  [zupo]
+
+- Added buildout.cfg to test how sphinx docs are generated.
+  [zupo]
+
+- Enabled choosing filename for 'production' buildout configuration.
+  [zupo]
+
+- The configure_egg_cache() command is now  more resilient to multiple runs.
+  [zupo]
+
 - Added instructions and examples on how to use niteoweb.fabfile for setting up
   a new server for running Plone projects.
   [zupo]
