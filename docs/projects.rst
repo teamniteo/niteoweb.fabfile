@@ -88,7 +88,7 @@ files in certain directories. Here's a sample ``buildout.cfg`` that you can use
 to prepare an environment for using this ``fabfile.py.in``. Save the
 ``fabfile.py.in`` in ``etc/`` directory in your buildout.
 
-.. sourcecode::
+::
 
     [buildout]
     unzip = true
@@ -123,8 +123,11 @@ to prepare an environment for using this ``fabfile.py.in``. Save the
     [pass]
     bacula = strong_password_here
     duplicity = strong_password_here
-    hetzner_ftp_user = whatever_password_hetzner_gives_you
-    hetzner_ftp_pass = whatever_password_hetzner_gives_you
+    hetzner_ftp_user = whatever_hetzner_gives_you
+    hetzner_ftp_pass = whatever_hetzner_gives_you
+
+    # Pin versions of niteoweb.fabfile and other dependencies
+    [versions]
 
     # Prepare Fabric
     [fabfile]
