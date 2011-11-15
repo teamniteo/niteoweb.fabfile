@@ -1,0 +1,43 @@
+#!/bin/sh
+#
+# Script created on 17-6-2008
+#
+# This script was created to make Duplicity backups.
+# Full backups are made on the 1st day of each month.
+# Then incremental backups are made on the other days.
+#
+
+# Loading the day of the month in a variable.
+date=`date +%d`
+
+
+# Setting the pass phrase to encrypt the backup files. Will use symmetrical keys in this case.
+PASSPHRASE='${pass:duplicity}'
+export PASSPHRASE
+
+# Setting the password for the FTP account that the
+# backup files will be transferred to.
+FTP_PASSWORD='${pass:hetzner_ftp_pass}'
+export FTP_PASSWORD
+
+# Check to see if we're at the first of the month.
+# If we are on the 1st day of the month, then run
+# a full backup. If not, then run an incremental
+# backup.
+if [ $date = 01 ]
+then
+duplicity remove-older-than 2M -v5 ftp://${pass:hetzner_ftp_user}@${pass:hetzner_ftp_user}.your-backup.de/system >>/var/log/duplicity.log
+duplicity full -v5 --exclude-filelist /etc/duplicityfilelist.conf / ftp://${pass:hetzner_ftp_user}@${pass:hetzner_ftp_user}.your-backup.de/system >>/var/log/duplicity.log
+
+else
+duplicity remove-older-than 2M -v5 ftp://${pass:hetzner_ftp_user}@${pass:hetzner_ftp_user}.your-backup.de/system >>/var/log/duplicity.log
+duplicity incremental -v5 --exclude-filelist /etc/duplicityfilelist.conf / ftp://${pass:hetzner_ftp_user}@${pass:hetzner_ftp_user}.your-backup.de/system >>/var/log/duplicity.log
+
+
+fi
+# Unsetting the confidential variables so they are
+# gone for sure.
+unset PASSPHRASE
+unset FTP_PASSWORD
+
+exit 0

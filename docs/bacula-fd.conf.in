@@ -1,0 +1,19 @@
+FileDaemon {
+  Name = bacula-fd
+  FDport = ${ports:bacula}
+  WorkingDirectory = "/var/lib/bacula"
+  Pid Directory = "/var/run/bacula"
+  Maximum Concurrent Jobs = 20
+}
+
+# List Directors who are permitted to contact this File daemon
+Director {
+  Name = bacula-dir
+  Password = ${config:bacula_password}
+}
+
+# Send all messages except skipped files back to Director
+Messages {
+  Name = Standard
+  director = bacula-dir = all, !skipped, !restored
+}
