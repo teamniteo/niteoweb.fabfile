@@ -103,6 +103,14 @@ to prepare an environment for using this ``fabfile.py.in``. Save the
         bacula-master-conf
         duplicity-sh
 
+    # Configuration constants
+    [config]
+    # domain on which this server runs
+    hostname = zulu.company.com
+
+    # server's name
+    shortname = zulu
+
     # Ports of services running on this server
     # (besides Nginx running on port 80 and 443)
     [ports]
