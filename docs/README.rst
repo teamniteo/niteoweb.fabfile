@@ -9,6 +9,6 @@ hardcoded internal stuff, so they are not really usable out-of-the-box, more so
 as a point of reference. If there is interest, we'll rewrite them to be more
 reusable.
 
-* `Source code @ GitHub <http://github.com/niteoweb/niteoweb.fabfile>`_
+* `Source code @ GitHub <http://github.com/nzupan/niteoweb.fabfile>`_
 * `Releases @ PyPI <http://pypi.python.org/pypi/niteoweb.fabfile>`_
 * `Sphinx docs @ ReadTheDocs <http://readthedocs.org/docs/niteowebfabfile>`_
