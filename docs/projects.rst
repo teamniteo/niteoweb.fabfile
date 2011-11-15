@@ -2,8 +2,8 @@
 Projects server
 ===============
 
-A Projects server is a server that runs your Plone/Python projects. This is a
-prerequisite to have before you can run and commands from the `Project` group
+A Projects server is a server that runs your Plone projects. This is a
+prerequisite to have before you can run any commands from the `Project` group
 of commands.
 
 Below is a ``fabfile.py.in`` buildout template that uses commands from `Server`
@@ -69,7 +69,6 @@ group to set up a Projects server based on Ubuntu 10.04.
 
         # install software stack
         install_system_libs()
-        install_postgres()
         install_nginx()
         install_sendmail()
 
