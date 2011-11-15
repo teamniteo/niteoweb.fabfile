@@ -1,8 +1,8 @@
 Changelog
 =========
 
-2.0.2 (2011-11-13)
-------------------
+2.1 (2011-11-15)
+----------------
 
 - You can now specify python version that is used for bootstraping buildout.
   [zupo]
