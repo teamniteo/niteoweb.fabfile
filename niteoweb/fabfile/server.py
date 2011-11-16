@@ -360,6 +360,11 @@ def install_rkhunter(email=None):
     uncomment('/etc/rkhunter.conf', '#ALLOWHIDDENDIR=\/dev\/.static', use_sudo=True)
     uncomment('/etc/rkhunter.conf', '#ALLOWHIDDENDIR=\/dev\/.initramfs', use_sudo=True)
 
+    # update files properties DB every time you run apt-get install, this
+    # prevents warnings every time a new version of some package is installed
+    append('/etc/default/rkhunter', '# Update file properties database after running apt-get install')
+    append('/etc/default/rkhunter', 'APT_AUTOGEN="yes"')
+
 
 def generate_selfsigned_ssl(hostname=None):
     """Generate self-signed SSL certificates and provide them to Nginx."""
