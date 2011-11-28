@@ -240,8 +240,11 @@ def configure_egg_cache():
     of eggs that we use in order to add speed and reduncancy to
     zc.buildout."""
 
-    dir_ensure('/etc/buildout/')
-    dir_ensure('/etc/buildout/{downloads,eggs,extends}')
+    with mode_sudo():
+        dir_ensure('/etc/buildout/')
+        dir_ensure('/etc/buildout/downloads')
+        dir_ensure('/etc/buildout/eggs')
+        dir_ensure('/etc/buildout/extends')
     if exists('/etc/buildout/default.cfg'):
         sudo('rm -rf /etc/buildout/default.cfg')
 
@@ -336,7 +339,7 @@ def install_sendmail(email=None):
     )
 
     # install sendmail
-    sudo('apt-get -yq install sendmail')
+    sudo('apt-get -yq install sendmail sendmail-base sendmail-bin sendmail-cf sensible-mda rmail')
 
     # all email should be sent to maintenance email
     append('/etc/aliases', 'root:           %(email)s' % opts, use_sudo=True)
@@ -362,8 +365,8 @@ def install_rkhunter(email=None):
 
     # update files properties DB every time you run apt-get install, this
     # prevents warnings every time a new version of some package is installed
-    append('/etc/default/rkhunter', '# Update file properties database after running apt-get install')
-    append('/etc/default/rkhunter', 'APT_AUTOGEN="yes"')
+    append('/etc/default/rkhunter', '# Update file properties database after running apt-get install', use_sudo=True)
+    append('/etc/default/rkhunter', 'APT_AUTOGEN="yes"', use_sudo=True)
 
 
 def generate_selfsigned_ssl(hostname=None):
@@ -617,7 +620,6 @@ def configure_hetzner_backup(duplicityfilelist=None, duplicitysh=None):
         duplicityfilelist=duplicityfilelist or env.get('duplicityfilelist') or '%s/etc/duplicityfilelist.conf' % os.getcwd(),
         duplicitysh=duplicitysh or env.get('duplicitysh') or '%s/etc/duplicity.sh' % os.getcwd(),
     )
-
     # install duplicity and dependencies
     sudo('apt-get -yq install duplicity ncftp')
 
