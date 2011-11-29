@@ -65,10 +65,9 @@ def get_start_index(steps):
 
     try:
         file = open(FILENAME, 'r')
-        failed_step = file.readline()
+        failed_step = file.readline().strip()
         step_names = [s.__name__ for s in steps]
         file.close()
-
         return step_names.index(failed_step)
     except (IOError, ValueError):
         print 'WARNING: Could not load the last step.'
