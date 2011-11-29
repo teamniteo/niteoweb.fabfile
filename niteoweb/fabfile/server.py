@@ -1,3 +1,5 @@
+from cuisine import dir_ensure
+from cuisine import mode_sudo
 from fabric.api import env
 from fabric.api import sudo
 from fabric.contrib.console import confirm
@@ -10,8 +12,6 @@ from fabric.context_managers import settings
 from fabric.operations import prompt
 from fabric.contrib.files import comment
 from niteoweb.fabfile import err
-from cuisine import dir_ensure
-from cuisine import mode_sudo
 
 import os
 
@@ -73,26 +73,6 @@ def create_projects_group():
     """Create a group that will hold all project users -> users
     that are dedicated for running one project."""
     sudo('addgroup projects')
-
-
-def create_project_user(prod_user):
-    """Add a user for a single project so the entire project can run under this
-    user."""
-
-    opts = dict(
-        prod_user=prod_user or env.prod_user or err("env.prod_user must be set"),
-    )
-
-    # create user
-    sudo('egrep %(prod_user)s /etc/passwd || adduser %(prod_user)s --disabled-password --gecos ""' % opts)
-
-    # add user to `projects` group
-    sudo('gpasswd -a %(prod_user)s projects' % opts)
-
-    # make use of buildout default.cfg
-    sudo('mkdir /home/%(prod_user)s/.buildout' % opts)
-    sudo('ln -s /etc/buildout/default.cfg /home/%(prod_user)s/.buildout/default.cfg' % opts)
-    sudo('chown -R %(prod_user)s:%(prod_user)s /home/%(prod_user)s/.buildout' % opts)
 
 
 def harden_sshd():
