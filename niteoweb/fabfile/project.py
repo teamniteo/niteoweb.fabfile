@@ -1,3 +1,5 @@
+from cuisine import dir_ensure
+from cuisine import mode_sudo
 from fabric.api import cd
 from fabric.api import env
 from fabric.api import get
@@ -110,9 +112,9 @@ def upload_data(prod_user=None):
     if not env.get('confirm'):
         confirm("This will destroy all current Zope data on the server. " \
         "Are you sure you want to continue?")
-
-    upload_zodb(prod_user)
-    upload_blobs(prod_user)
+    else:
+        upload_zodb(prod_user)
+        upload_blobs(prod_user)
 
 
 def upload_zodb(prod_user=None, path=None):
@@ -127,20 +129,22 @@ def upload_zodb(prod_user=None, path=None):
     if not env.get('confirm'):
         confirm("This will destroy the current Data.fs file on the server. " \
         "Are you sure you want to continue?")
+    else:
+        with cd('/home/%(prod_user)s/var/filestorage' % opts):
 
-    with cd('/home/%(prod_user)s/var/filestorage' % opts):
+            # remove temporary BLOBs from previous uploads
+            if exists('/tmp/Data.fs'):
+                sudo('rm -rf /tmp/Data.fs')
 
-        # remove temporary BLOBs from previous uploads
-        if exists('/tmp/Data.fs'):
-            sudo('rm -rf /tmp/Data.fs')
-
-        # upload Data.fs to server and set production user as it's owner
-        upload_template(
-            filename='%(path)s/var/filestorage/Data.fs' % opts,
-            destination='Data.fs',
-            use_sudo=True
-        )
-        sudo('chown -R %(prod_user)s:%(prod_user)s Data.fs' % opts)
+            # upload Data.fs to server and set production user as it's owner
+            upload_template(
+                filename='%(path)s/var/filestorage/Data.fs' % opts,
+                destination='Data.fs',
+                use_sudo=True
+            )
+            sudo('chown -R %(prod_user)s:%(prod_user)s Data.fs' % opts)
+            if exists('/home/%(prod_user)s/var/filestorage/Data.fs.bak' % opts):
+                sudo('chown -R %(prod_user)s:%(prod_user)s Data.fs.bak' % opts)
 
 
 def upload_blobs(prod_user=None, path=None):
@@ -153,22 +157,26 @@ def upload_blobs(prod_user=None, path=None):
     if not env.get('confirm'):
         confirm("This will destroy all current BLOB files on the server. " \
         "Are you sure you want to continue?")
+    else:
+        with cd('/home/%(prod_user)s/var' % opts):
 
-    with cd('/home/%(prod_user)s/var' % opts):
+            # backup current BLOBs
+            if exists('blobstorage'):
+                # remove the previous backup
+                sudo('rm -rf blobstorage.bak')
 
-        # backup current BLOBs
-        if exists('blobstorage'):
-            sudo('mv blobstorage blobstorage.bak')
+                # create a backup
+                sudo('mv blobstorage blobstorage.bak')
 
-        # remove temporary BLOBs from previous uploads
-        if exists('/tmp/blobstorage'):
-            sudo('rm -rf /tmp/blobstorage')
+            # remove temporary BLOBs from previous uploads
+            if exists('/tmp/blobstorage'):
+                sudo('rm -rf /tmp/blobstorage')
 
-        # upload BLOBs to the server and move them to their place
-        rsync_project('/tmp', local_dir='%(path)s/var/blobstorage' % opts)
-        sudo('mv /tmp/blobstorage ./')
-        sudo('chown -R %(prod_user)s:%(prod_user)s blobstorage' % opts)
-        sudo('chmod -R 700 blobstorage')
+            # upload BLOBs to the server and move them to their place
+            rsync_project('/tmp', local_dir='%(path)s/var/blobstorage' % opts)
+            sudo('mv /tmp/blobstorage ./')
+            sudo('chown -R %(prod_user)s:%(prod_user)s blobstorage' % opts)
+            sudo('chmod -R 700 blobstorage')
 
 
 def start_supervisord(prod_user=None):
@@ -184,6 +192,9 @@ def start_supervisord(prod_user=None):
 
 def supervisorctl(*cmd):
     """Runs an arbitrary supervisorctl command."""
+    opts = dict(
+        prod_user=env.get('prod_user'),
+    )
     with cd('/home/%(prod_user)s' % opts):
         sudo('bin/supervisorctl ' + ' '.join(cmd), user=env.prod_user)
 
