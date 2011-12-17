@@ -9,16 +9,12 @@ from fabric.contrib.files import upload_template
 from fabric.context_managers import settings
 from fabric.operations import prompt
 from fabric.contrib.files import comment
+from niteoweb.fabfile import cmd
 from niteoweb.fabfile import err
 from cuisine import dir_ensure
 from cuisine import mode_sudo
 
 import os
-
-
-def cmd(*cmd):
-    """Execute an arbitrary command on the server. Example ``bin/fab run:"uname -a"``."""
-    sudo(' '.join(cmd))
 
 
 def normalize_rackspace():
