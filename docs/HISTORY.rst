@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.1.3 (2011-12-23)
+------------------
+
+- Run `bootstrap` and `buildout` with ``prod_user``, not with `root`.
+  [zupo]
+
 2.1.2 (2011-12-23)
 ------------------
 
