@@ -84,7 +84,7 @@ def prepare_buildout(prod_user=None, python_version=None, production_cfg=None):
             'virtualenv -p python%(python_version)s --no-site-packages ./' % opts,
             user=opts['prod_user']
         )
-        sudo('bin/python bootstrap.py -c %(production_cfg)s' % opts, opts['prod_user'])
+        sudo('bin/python bootstrap.py -c %(production_cfg)s' % opts, user=opts['prod_user'])
 
 
 def run_buildout(prod_user=None, production_cfg=None):
@@ -97,7 +97,7 @@ def run_buildout(prod_user=None, production_cfg=None):
     )
 
     with cd('/home/%(prod_user)s' % opts):
-        sudo('bin/buildout -c %(production_cfg)s' % opts, opts['prod_user'])
+        sudo('bin/buildout -c %(production_cfg)s' % opts, user=opts['prod_user'])
 
     # allow everyone in group `projects` to use what you have just put inside
     # the egg cache
