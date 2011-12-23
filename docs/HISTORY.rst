@@ -1,6 +1,12 @@
 Changelog
 =========
 
+2.1.2 (2011-12-23)
+------------------
+
+- Use ``prod_user`` from ``opts`` and not from ``env``.
+  [zupo]
+
 2.1.1 (2011-12-23)
 ------------------
 
@@ -20,6 +26,9 @@ Changelog
 ----------------
 
 - Lots of minor bugfixes.
+  [zupo]
+
+- You can now specify python version that is used for bootstraping buildout.
   [zupo]
 
 - Added `gitk` to list of libraries to install.
