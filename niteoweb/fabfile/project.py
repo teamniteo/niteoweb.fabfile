@@ -185,7 +185,7 @@ def start_supervisord(prod_user=None):
 
 def supervisorctl(*cmd):
     """Runs an arbitrary supervisorctl command."""
-    with cd('/home/%(prod_user)s' % opts):
+    with cd('/home/%(prod_user)s' % env):
         sudo('bin/supervisorctl ' + ' '.join(cmd), user=env.prod_user)
 
 
