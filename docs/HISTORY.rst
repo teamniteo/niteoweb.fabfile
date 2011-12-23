@@ -1,7 +1,22 @@
 Changelog
 =========
 
-2.1 (unreleased)
+2.1.1 (2011-12-23)
+------------------
+
+- Minor runtime fix for ``supervisorctl`` command.
+  [zupo]
+
+- Moved ``cmd`` coomand to ``__init__.py`` so it's available both in
+  ``server.py`` and ``project.py``.
+  [zupo]
+
+- Update RKHunter's files properties DB every time you run apt-get install,
+  this prevents warnings every time a new version of some package is installed.
+  [zupo]
+
+
+2.1 (2011-11-15)
 ----------------
 
 - Lots of minor bugfixes.
