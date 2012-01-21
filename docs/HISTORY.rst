@@ -1,7 +1,34 @@
 Changelog
 =========
 
-2.1 (unreleased)
+2.1.3 (2011-12-23)
+------------------
+
+- Run `bootstrap` and `buildout` with ``prod_user``, not with `root`.
+  [zupo]
+
+2.1.2 (2011-12-23)
+------------------
+
+- Use ``prod_user`` from ``opts`` and not from ``env``.
+  [zupo]
+
+2.1.1 (2011-12-23)
+------------------
+
+- Minor runtime fix for ``supervisorctl`` command.
+  [zupo]
+
+- Moved ``cmd`` coomand to ``__init__.py`` so it's available both in
+  ``server.py`` and ``project.py``.
+  [zupo]
+
+- Update RKHunter's files properties DB every time you run apt-get install,
+  this prevents warnings every time a new version of some package is installed.
+  [zupo]
+
+
+2.1 (2011-11-15)
 ----------------
 
 - Fixed upload_zodb, upload_blobs and upload_data methods - data was uploaded
@@ -14,6 +41,9 @@ Changelog
 
 - Lots of minor bugfixes.
   [zupo, jcerjak]
+
+- You can now specify python version that is used for bootstraping buildout.
+  [zupo]
 
 - Added `gitk` to list of libraries to install.
   [zupo]
