@@ -1,6 +1,13 @@
 Changelog
 =========
 
+2.2.1 (2012-01-25)
+------------------
+
+- Fixed GitHub's URLs to point to github.com/niteoweb.
+  [zupo]
+
+
 2.2 (2012-01-25)
 ----------------
 

@@ -1,1 +1,1 @@
-See `docs/README.rst <https://github.com/nzupan/niteoweb.fabfile/blob/master/docs/README.rst>`_.
+See `docs/README.rst <https://github.com/niteoweb/niteoweb.fabfile/blob/master/docs/README.rst>`_.
