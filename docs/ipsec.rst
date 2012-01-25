@@ -140,6 +140,6 @@ settings:
 
  * Description: whatever
  * Server: Public IP of your router behind which the IPsec server sits
- * Account: a Linux user on the machine that is in groups ``sudo``
+ * Account: a Linux user on the machine that is in the ``sudo`` group
  * Group name: ``sudo`` (it's specified in ``racoon.conf``)
  * Secret: secret set for group ``sudo`` in ``psk.txt``
