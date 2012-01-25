@@ -42,7 +42,7 @@ group to set up an IPsec server (based on Ubuntu 10.04).
         Use this command only on a fresh and clean server."""
 
         with settings(user='root', password=env.temp_root_pass):
-            create_admin_accounts(default_password='geslo123')
+            create_admin_accounts(default_password='secret123')
 
         # security
         harden_sshd()

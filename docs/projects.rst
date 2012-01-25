@@ -84,6 +84,7 @@ group to set up a Projects server (based on Ubuntu 10.04).
         install_bacula_client()
         configure_hetzner_backup()
 
+
 Sample buildout.cfg
 -------------------
 
