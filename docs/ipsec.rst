@@ -129,3 +129,17 @@ buildout:
 
  * :download:`racoon.conf.in <etc/racoon.conf.in>`.
  * :download:`psk.txt.in <etc/psk.txt.in>`.
+
+
+Client configuration
+--------------------
+
+Configuring a client to use this IPsec server is fairly easy. For iOS,
+go to Settings -> Network -> VPN and add a new IPsec VPN with the following
+settings:
+
+ * Description: whatever
+ * Server: Public IP of your router behind which the IPsec server sits
+ * Account: a Linux user on the machine that is in groups ``sudo``
+ * Group name: ``sudo`` (it's specified in ``racoon.conf``)
+ * Secret: secret set for group ``sudo`` in ``psk.txt``
