@@ -358,8 +358,8 @@ def install_rkhunter(email=None):
 
     # update files properties DB every time you run apt-get install, this
     # prevents warnings every time a new version of some package is installed
-    append('/etc/default/rkhunter', '# Update file properties database after running apt-get install')
-    append('/etc/default/rkhunter', 'APT_AUTOGEN="yes"')
+    append('/etc/default/rkhunter', '# Update file properties database after running apt-get install', use_sudo=True)
+    append('/etc/default/rkhunter', 'APT_AUTOGEN="yes"', use_sudo=True)
 
 
 def generate_selfsigned_ssl(hostname=None):
