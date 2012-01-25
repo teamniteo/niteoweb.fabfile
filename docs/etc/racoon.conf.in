@@ -1,0 +1,55 @@
+# The listen group specifies the IP’s to bind on.
+# The path directives tell racoon where to find its other configuration files.
+path pre_shared_key "/etc/racoon/psk.txt";
+
+# Next up is a remote section, specifying the phase 1 settings. Normal IPsec
+# tunnels are point-to-point. You can configure the tunnel statically on both
+# ends. Here we are setting up a roaming tunnel: we don’t know where the client
+# is. This has some implications:
+# * the server can never initiate the connection (since the IP of the client(s)
+#   are unknown)
+# * The client’s tunnel-IP needs to be assigned from the server. This minimizes
+#   client-side configuration
+# * The client must authenticate itself using a username/password combo.
+remote anonymous { # Do not filter on source IP, anyone can connect to this tunnel
+  passive on; # Don't initiate, only listen
+  exchange_mode main,aggressive; # Accept both modes
+  my_identifier fqdn "ipsec"; # Identify ourselves with this name
+  mode_cfg on; # configure the client's IP address using mode configuration
+  verify_cert off; # Don't check client certificate
+  ike_frag on; # Announce IKE-fragmentation support
+  generate_policy on; # automatically install SPD's
+  nat_traversal on; # Support NAT traversal
+  dpd_delay 20; # Disconnect dead clients after 20 seconds
+  proposal { # Phase 1 parameters
+    encryption_algorithm aes;
+    hash_algorithm sha1;
+    authentication_method xauth_psk_server; # Require PreSharedKey group authentication and username/password user authentication
+    dh_group 2;
+  }
+}
+
+# Next section is the mode configuration. This is sometimes called phase 1.5,
+# because it happens between phase 1 and phase 2. In this step, the client is
+# authenticated.
+mode_cfg {
+  auth_source system; # Authenticate against Linux users
+  save_passwd on; # Allow users to save passwords
+
+  group_source system; # Verify group membership in Linux groups
+  auth_groups "sudo";  # Require users to be member of this group in order to connect
+
+  network4 10.0.0.0;  # Give clients addresses starting from this address
+  pool_size 255;  # up to 255 addresses higher
+
+  dns4 8.8.8.8;      # Use Google's public DNS
+  dns4 8.8.4.4;
+}
+
+# The sainfo section specifies the parameters to use for phase 2, the actual
+# data-encryption
+sainfo anonymous {
+ encryption_algorithm aes;
+ authentication_algorithm hmac_sha1;
+ compression_algorithm deflate;
+}

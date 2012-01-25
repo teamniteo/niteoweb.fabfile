@@ -9,6 +9,7 @@ Table of Contents
    hq.rst
    projects.rst
    bacula.rst
+   ipsec.rst
    api.rst
 
 .. include:: FUTURE.rst
