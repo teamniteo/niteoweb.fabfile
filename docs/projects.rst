@@ -169,8 +169,8 @@ to prepare an environment for using this ``fabfile.py.in``. Save the
 Samples of config files that you need to put inside ``etc/`` directory in your
 buildout:
 
- * :download:`bacula-fd.conf.in <bacula-fd.conf.in>`.
- * :download:`bacula-master.conf.in <bacula-master.conf.in>`.
- * :download:`duplicity.sh.in <duplicity.sh.in>`.
- * :download:`duplicityfilelist.conf <duplicityfilelist.conf>`.
- * :download:`nginx.conf <nginx.conf>`.
+ * :download:`bacula-fd.conf.in <etc/bacula-fd.conf.in>`.
+ * :download:`bacula-master.conf.in <etc/bacula-master.conf.in>`.
+ * :download:`duplicity.sh.in <etc/duplicity.sh.in>`.
+ * :download:`duplicityfilelist.conf <etc/duplicityfilelist.conf>`.
+ * :download:`nginx.conf <etc/nginx.conf>`.
