@@ -129,13 +129,8 @@ def run_buildout(prod_user=None, production_cfg=None):
 
 def upload_data(prod_user=None):
     """Upload Zope's data to the server."""
-
-    if not env.get('confirm'):
-        confirm("This will destroy all current Zope data on the server. " \
-        "Are you sure you want to continue?")
-    else:
-        upload_zodb(prod_user)
-        upload_blobs(prod_user)
+    upload_zodb(prod_user)
+    upload_blobs(prod_user)
 
 
 def upload_zodb(prod_user=None, path=None):
@@ -146,26 +141,26 @@ def upload_zodb(prod_user=None, path=None):
     )
 
     # _verify_env(['prod_user', 'path', ])
+    confirmed = env.get('confirm') or confirm("This will destroy the current" \
+        "Data.fs file on the server. Are you sure you want to continue?")
 
-    if not env.get('confirm'):
-        confirm("This will destroy the current Data.fs file on the server. " \
-        "Are you sure you want to continue?")
-    else:
-        with cd('/home/%(prod_user)s/var/filestorage' % opts):
+    if not confirmed:
+        return
 
-            # remove temporary BLOBs from previous uploads
-            if exists('/tmp/Data.fs'):
-                sudo('rm -rf /tmp/Data.fs')
+    with cd('/home/%(prod_user)s/var/filestorage' % opts):
+        # remove temporary BLOBs from previous uploads
+        if exists('/tmp/Data.fs'):
+            sudo('rm -rf /tmp/Data.fs')
 
-            # upload Data.fs to server and set production user as it's owner
-            upload_template(
-                filename='%(path)s/var/filestorage/Data.fs' % opts,
-                destination='Data.fs',
-                use_sudo=True
-            )
-            sudo('chown -R %(prod_user)s:%(prod_user)s Data.fs' % opts)
-            if exists('/home/%(prod_user)s/var/filestorage/Data.fs.bak' % opts):
-                sudo('chown -R %(prod_user)s:%(prod_user)s Data.fs.bak' % opts)
+        # upload Data.fs to server and set production user as it's owner
+        upload_template(
+            filename='%(path)s/var/filestorage/Data.fs' % opts,
+            destination='Data.fs',
+            use_sudo=True
+        )
+        sudo('chown -R %(prod_user)s:%(prod_user)s Data.fs' % opts)
+        if exists('/home/%(prod_user)s/var/filestorage/Data.fs.bak' % opts):
+            sudo('chown -R %(prod_user)s:%(prod_user)s Data.fs.bak' % opts)
 
 
 def upload_blobs(prod_user=None, path=None):
@@ -175,29 +170,30 @@ def upload_blobs(prod_user=None, path=None):
         path=path or env.get('path') or os.getcwd()
     )
 
-    if not env.get('confirm'):
-        confirm("This will destroy all current BLOB files on the server. " \
-        "Are you sure you want to continue?")
-    else:
-        with cd('/home/%(prod_user)s/var' % opts):
+    confirmed = env.get('confirm') or confirm("This will destroy all current" \
+        "BLOB files on the server. Are you sure you want to continue?")
 
-            # backup current BLOBs
-            if exists('blobstorage'):
-                # remove the previous backup
-                sudo('rm -rf blobstorage.bak')
+    if not confirmed:
+        return
 
-                # create a backup
-                sudo('mv blobstorage blobstorage.bak')
+    with cd('/home/%(prod_user)s/var' % opts):
+        # backup current BLOBs
+        if exists('blobstorage'):
+            # remove the previous backup
+            sudo('rm -rf blobstorage.bak')
 
-            # remove temporary BLOBs from previous uploads
-            if exists('/tmp/blobstorage'):
-                sudo('rm -rf /tmp/blobstorage')
+            # create a backup
+            sudo('mv blobstorage blobstorage.bak')
 
-            # upload BLOBs to the server and move them to their place
-            rsync_project('/tmp', local_dir='%(path)s/var/blobstorage' % opts)
-            sudo('mv /tmp/blobstorage ./')
-            sudo('chown -R %(prod_user)s:%(prod_user)s blobstorage' % opts)
-            sudo('chmod -R 700 blobstorage')
+        # remove temporary BLOBs from previous uploads
+        if exists('/tmp/blobstorage'):
+            sudo('rm -rf /tmp/blobstorage')
+
+        # upload BLOBs to the server and move them to their place
+        rsync_project('/tmp', local_dir='%(path)s/var/blobstorage' % opts)
+        sudo('mv /tmp/blobstorage ./')
+        sudo('chown -R %(prod_user)s:%(prod_user)s blobstorage' % opts)
+        sudo('chmod -R 700 blobstorage')
 
 
 def start_supervisord(prod_user=None):
@@ -221,17 +217,19 @@ def supervisorctl(*cmd):
 
 
 def download_data():
-    """Download Zope's Data.fs from the server."""
+    """Download Zope's Data.fs and blobstorage from the server."""
 
-    if not env.get('confirm'):
-        confirm("This will destroy all current Zope data on your local machine. " \
-                "Are you sure you want to continue?")
+    confirmed = env.get('confirm') or confirm("This will destroy all current" \
+        " Zope data on your local machine. Are you sure you want to continue?")
+
+    if not confirmed:
+        return
 
     with cd('/home/%(prod_user)s/var' % env):
 
         ### Downlaod Data.fs ###
         # backup current Data.fs
-        if os.path.exists('filestorage/Data.fs'):
+        if os.path.exists('%(path)s/var/filestorage/Data.fs' % env):
             local('mv %(path)s/var/filestorage/Data.fs %(path)s/var/filestorage/Data.fs.bak' % env)
 
         # remove temporary Data.fs file from previous downloads
