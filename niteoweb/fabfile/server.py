@@ -521,6 +521,8 @@ def configure_bacula_master(path=None):
         path=path or env.get('path') or err('env.path must be set'),
     )
 
+    # XXX: Shouldn't we set file owner to bacula user, not the current user, 
+    # running the fabric commands?
     upload_template('%(path)s/etc/bacula-dir.conf' % opts,
                     '/etc/bacula/bacula-dir.conf',
                     use_sudo=True)
@@ -560,8 +562,7 @@ def install_bacula_client():
 
 
 def configure_bacula_client(path=None):
-    """Upload configuration for Bacula File Deamon (client)
-    and restart it."""
+    """Upload configuration for Bacula File Deamon (client) and restart it."""
     opts = dict(
         path=path or env.get('path') or err('env.path must be set'),
     )
@@ -579,10 +580,9 @@ def add_to_bacula_master(shortname=None, path=None, bacula_host_string=None):
     )
 
     with settings(host_string=opts['bacula_host_string']):
-
         # upload project-specific configuration
         upload_template(
-            '%(path)s/etc/bacula-master.conf' % opts,
+            '%(path)s/etc/bacula-client.conf' % opts,
             '/etc/bacula/clients/%(shortname)s.conf' % opts,
             use_sudo=True)
 
