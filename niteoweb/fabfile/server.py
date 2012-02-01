@@ -158,6 +158,7 @@ def install_system_libs(additional_libs=None):
              'rsync '
              'unzip '
              'screen '
+             'htop '
              'telnet '
              'subversion '
              'build-essential '
