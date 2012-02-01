@@ -7,6 +7,7 @@ from fabric.api import local
 from fabric.api import settings
 from fabric.api import sudo
 from fabric.contrib.console import confirm
+from fabric.contrib.files import append
 from fabric.contrib.files import exists
 from fabric.contrib.files import upload_template
 from fabric.contrib.project import rsync_project
@@ -67,6 +68,25 @@ def enable_nginx_config(shortname=None):
     sudo('ln -fs /etc/nginx/sites-available/%(shortname)s.conf '
          '/etc/nginx/sites-enabled/%(shortname)s.conf' % opts)
     sudo('service nginx reload')
+
+
+def add_files_to_backup(host_shortname=None, bacula_ip=None, bacula_fileset=None):
+    """Append a list of project files to backup to this host's fileset."""
+    opts = dict(
+        host_shortname=host_shortname or env.host_shortname or err("env.host_shortname must be set"),
+        bacula_ip=bacula_ip or env.get('bacula_ip') or err("env.bacula_ip must be set"),
+        bacula_fileset=bacula_fileset or env.get('bacula_fileset') or '%s/etc/bacula-fileset.txt' % os.getcwd(),
+    )
+
+    with settings(host_string=opts['bacula_ip']):
+        append(
+            '/etc/bacula/clients/%(host_shortname)s-fileset.txt' % env,
+            open(opts['bacula_fileset']).read(),
+            use_sudo=True
+        )
+
+        # reload bacula master configuration
+        sudo("service bacula-director restart")
 
 
 def download_code(shortname=None, prod_user=None, svn_params=None, svn_url=None, svn_repo=None, svn_dir=None):

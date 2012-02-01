@@ -586,6 +586,14 @@ def add_to_bacula_master(shortname=None, path=None, bacula_host_string=None):
             '/etc/bacula/clients/%(shortname)s.conf' % opts,
             use_sudo=True)
 
+        # Create a file that will contain a list of files to backup for this 
+        # server (a fileset) - this file is updated automatically by every project
+        # installed on this server (check add_files_to_backup in project.py)
+        fileset_path = '/etc/bacula/clients/%(shortname)s-fileset.txt' % opts
+        if not exists(fileset_path):
+            sudo('touch %s' % fileset_path)
+            sudo('chown bacula %s' % fileset_path)
+
         # reload bacula master configuration
         sudo("service bacula-director restart")
 
