@@ -1,6 +1,17 @@
 Changelog
 =========
 
+2.2.2 (2012-02-09)
+------------------
+
+- Use ``--force`` when purging old Duplicity backups so it also purges
+  old incomplete backups.
+  [zupo]
+
+- Instructions on how to setup iOS or OS X to connect to IPsec server.
+  [zupo]
+
+
 2.2.1 (2012-01-25)
 ------------------
 
