@@ -237,7 +237,9 @@ def configure_egg_cache():
 
     # force maintenance users to also use default.cfg (needed when running buildout via Fabric)
     for user in env.admins:
-        dir_ensure('/home/%s/.buildout' % user)
+        with mode_sudo():
+            dir_ensure('/home/%s/.buildout' % user)
+
         if exists('/home/%s/.buildout/default.cfg' % user):
             sudo('rm -rf /home/%s/.buildout/default.cfg' % user)
 
