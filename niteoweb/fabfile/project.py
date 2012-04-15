@@ -170,6 +170,14 @@ def upload_zodb(prod_user=None, path=None, zodb_files=None):
         for filename in zodb_files:
             opts['filename'] = filename
 
+            # backup current database
+            if exists(filename):
+                # remove the previous backup
+                sudo('rm -rf %(filename)s.bak' % opts)
+
+                # create a backup
+                sudo('mv %(filename)s %(filename)s.bak' % opts)
+
             # remove temporary zodb file(s) from previous uploads
             if exists('/tmp/%(filename)s' % opts):
                 sudo('rm -rf /tmp/%(filename)s' % opts)
