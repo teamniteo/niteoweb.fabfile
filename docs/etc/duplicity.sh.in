@@ -26,12 +26,12 @@ export FTP_PASSWORD
 # backup.
 if [ $date = 01 ]
 then
-duplicity remove-older-than 2M -v5 ftp://${pass:hetzner_ftp_user}@${pass:hetzner_ftp_user}.your-backup.de/system >>/var/log/duplicity.log
-duplicity full -v5 --exclude-filelist /etc/duplicityfilelist.conf / ftp://${pass:hetzner_ftp_user}@${pass:hetzner_ftp_user}.your-backup.de/system >>/var/log/duplicity.log
+duplicity --timeout 120 remove-older-than 2M -v5 --force ftp://${pass:hetzner_ftp_user}@${pass:hetzner_ftp_user}.your-backup.de/system >>/var/log/duplicity.log
+duplicity --timeout 120 full -v5 --exclude-filelist /etc/duplicityfilelist.conf / ftp://${pass:hetzner_ftp_user}@${pass:hetzner_ftp_user}.your-backup.de/system >>/var/log/duplicity.log
 
 else
-duplicity remove-older-than 2M -v5 ftp://${pass:hetzner_ftp_user}@${pass:hetzner_ftp_user}.your-backup.de/system >>/var/log/duplicity.log
-duplicity incremental -v5 --exclude-filelist /etc/duplicityfilelist.conf / ftp://${pass:hetzner_ftp_user}@${pass:hetzner_ftp_user}.your-backup.de/system >>/var/log/duplicity.log
+duplicity --timeout 120 remove-older-than 2M -v5 --force ftp://${pass:hetzner_ftp_user}@${pass:hetzner_ftp_user}.your-backup.de/system >>/var/log/duplicity.log
+duplicity --timeout 120 incremental -v5 --exclude-filelist /etc/duplicityfilelist.conf / ftp://${pass:hetzner_ftp_user}@${pass:hetzner_ftp_user}.your-backup.de/system >>/var/log/duplicity.log
 
 
 fi

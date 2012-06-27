@@ -622,3 +622,38 @@ def configure_hetzner_backup(duplicityfilelist=None, duplicitysh=None):
 
     if not env.get('confirm'):
         confirm("You need to manually run a full backup first time. Noted?")
+
+
+def install_ipsec(racoonconf=None, psktxt=None, server_ip=None):
+    """Install and configure IPsec server."""
+
+    opts = dict(
+        server_ip=server_ip or env.server_ip or err("env.server_ip must be set"),
+    )
+
+    # install and configure racoon
+    sudo('apt-get -yq install racoon')
+    configure_racoon(racoonconf, psktxt)
+
+    # forward traffic so IPsec-ed devices have internet
+    sudo('apt-get -yq install iptables-persistent')
+    uncomment('/etc/sysctl.conf', 'net.ipv4.ip_forward = 1', use_sudo=True)
+    sudo('iptables-save > /etc/iptables/rules')
+    append('/etc/iptables/rules',
+           'iptables -t nat -A POSTROUTING -s 10.0.0.0/24 -o eth0 -j SNAT --to-source %(server_ip)s' % opts,
+           use_sudo=True)
+
+
+def configure_racoon(racoonconf=None, psktxt=None):
+    """Upload racoon configuration files and restart the service."""
+    opts = dict(
+        racoonconf=racoonconf or env.get('racoonconf') or '%s/etc/racoon.conf' % os.getcwd(),
+        psktxt=psktxt or env.get('psktxt') or '%s/etc/psk.txt' % os.getcwd(),
+    )
+
+    upload_template(opts['racoonconf'], '/etc/racoon/racoon.conf', use_sudo=True)
+    upload_template(opts['psktxt'], '/etc/racoon/psk.txt', use_sudo=True)
+    sudo('chown -R root:root /etc/racoon/')
+    sudo('chmod -R 700 /etc/racoon/')
+
+    sudo('service racoon restart')

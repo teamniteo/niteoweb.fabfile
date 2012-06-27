@@ -1,17 +1,51 @@
 Changelog
 =========
 
+2.2.2 (2012-02-09)
+------------------
+
+- Use ``--force`` when purging old Duplicity backups so it also purges
+  old incomplete backups.
+  [zupo]
+
+- Instructions on how to setup iOS or OS X to connect to IPsec server.
+  [zupo]
+
+
+2.2.1 (2012-01-25)
+------------------
+
+- Fixed GitHub's URLs to point to github.com/niteoweb.
+  [zupo]
+
+
+2.2 (2012-01-25)
+----------------
+
+- Fabric step for installing `IPsec`.
+  [zupo]
+
+- Use sudo when configuring rkhunter.
+  [zupo]
+
+- Moved config files in ``docs`` to ``docs/etc/`` folder so they don't mix with
+  Sphinx files.
+  [zupo]
+
+
 2.1.3 (2011-12-23)
 ------------------
 
 - Run `bootstrap` and `buildout` with ``prod_user``, not with `root`.
   [zupo]
 
+
 2.1.2 (2011-12-23)
 ------------------
 
 - Use ``prod_user`` from ``opts`` and not from ``env``.
   [zupo]
+
 
 2.1.1 (2011-12-23)
 ------------------
