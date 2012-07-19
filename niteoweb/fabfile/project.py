@@ -89,7 +89,7 @@ def add_files_to_backup(host_shortname=None, bacula_ip=None, bacula_fileset=None
         sudo("service bacula-director restart")
 
 
-def download_code(shortname=None, prod_user=None, svn_params=None, svn_url=None, svn_repo=None, svn_dir=None):
+def download_code(shortname=None, prod_user=None, svn_command=None, svn_params=None, svn_url=None, svn_repo=None, svn_dir=None):
     """Pull project code from code repository."""
     opts = dict(
         shortname=shortname or env.get('shortname'),
@@ -97,6 +97,7 @@ def download_code(shortname=None, prod_user=None, svn_params=None, svn_url=None,
     )
 
     more_opts = dict(
+        svn_command=svn_command or env.get('svn_command') or 'export',
         svn_params=svn_params or env.get('svn_params') or '--force --no-auth-cache',
         svn_url=svn_url or env.get('svn_url') or 'https://niteoweb.repositoryhosting.com/svn',
         svn_repo=svn_repo or env.get('svn_repo') or 'niteoweb_%(shortname)s' % opts,
@@ -106,7 +107,7 @@ def download_code(shortname=None, prod_user=None, svn_params=None, svn_url=None,
 
     with cd('/home/%(prod_user)s' % opts):
         sudo(
-            'svn export %(svn_params)s %(svn_url)s/%(svn_repo)s/%(svn_dir)s ./' % opts,
+            'svn %(svn_command)s %(svn_params)s %(svn_url)s/%(svn_repo)s/%(svn_dir)s ./' % opts,
             user=opts['prod_user']
         )
 
