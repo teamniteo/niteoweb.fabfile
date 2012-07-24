@@ -86,9 +86,10 @@ def create_project_user(prod_user):
     sudo('gpasswd -a %(prod_user)s projects' % opts)
 
     # make use of buildout default.cfg
-    sudo('mkdir /home/%(prod_user)s/.buildout' % opts)
-    sudo('ln -s /etc/buildout/default.cfg /home/%(prod_user)s/.buildout/default.cfg' % opts)
-    sudo('chown -R %(prod_user)s:%(prod_user)s /home/%(prod_user)s/.buildout' % opts)
+    if not exists('/home/%(prod_user)s/.buildout' % opts):
+        sudo('mkdir /home/%(prod_user)s/.buildout' % opts)
+        sudo('ln -s /etc/buildout/default.cfg /home/%(prod_user)s/.buildout/default.cfg' % opts)
+        sudo('chown -R %(prod_user)s:%(prod_user)s /home/%(prod_user)s/.buildout' % opts)
 
 
 def harden_sshd():
