@@ -668,6 +668,6 @@ def configure_racoon(racoonconf=None, psktxt=None):
 def install_java():
     """Install java from webupd8 repository."""
     sudo("apt-get -yq install python-software-properties")
-    sudo("add-apt-repository -y ppa:webupd8team/java")
+    sudo("add-apt-repository ppa:webupd8team/java")
     sudo("apt-get update")
     sudo("apt-get -yq install oracle-java7-installer")
