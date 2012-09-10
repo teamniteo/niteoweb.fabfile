@@ -232,6 +232,22 @@ def install_python_24():
     sudo('easy_install-2.4 virtualenv')
 
 
+def install_python_27():
+    """Install Python 2.7 and tools for it."""
+
+    sudo('add-apt-repository ppa:fkrull/deadsnakes')
+    sudo('apt-get update')
+    sudo('apt-get -yq install python2.7-dev')
+
+    # install Distribute
+    sudo('curl -O http://python-distribute.org/distribute_setup.py')
+    sudo('python2.7 distribute_setup.py')
+    sudo('rm -f distribute*')
+
+    # install virtualenv
+    sudo('easy_install-2.7 virtualenv')
+
+
 def configure_egg_cache():
     """Configure a system-wide egg-cache so we have a local cache
     of eggs that we use in order to add speed and reduncancy to
