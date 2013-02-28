@@ -486,35 +486,42 @@ def install_postgres():
 def configure_postgres():
     """Upload Postgres configuration from ``etc/`` and restart the server."""
 
+    version = sudo("psql --version | grep -ro '[8-9].[0-9]'")
+    conf_dir_prefix = "/etc/postgresql/%s/" % version
+
     # pg_hba.conf
-    comment('/etc/postgresql/8.4/main/pg_hba.conf',
+    comment('/etc/postgresql/%s/main/pg_hba.conf' % version,
             'local   all         postgres                          ident',
             use_sudo=True)
-    sed('/etc/postgresql/8.4/main/pg_hba.conf',
+    sed('/etc/postgresql/%s/main/pg_hba.conf' % version,
         'local   all         all                               ident',
         'local   all         all                               md5',
         use_sudo=True)
 
     # postgres.conf
-    uncomment('/etc/postgresql/8.4/main/postgresql.conf', '#autovacuum = on', use_sudo=True)
-    uncomment('/etc/postgresql/8.4/main/postgresql.conf', '#track_activities = on', use_sudo=True)
-    uncomment('/etc/postgresql/8.4/main/postgresql.conf', '#track_counts = on', use_sudo=True)
-    sed('/etc/postgresql/8.4/main/postgresql.conf',
+    uncomment(conf_dir_prefix + 'main/postgresql.conf', '#autovacuum = on', use_sudo=True)
+    uncomment(conf_dir_prefix + 'main/postgresql.conf', '#track_activities = on', use_sudo=True)
+    uncomment(conf_dir_prefix + 'main/postgresql.conf', '#track_counts = on', use_sudo=True)
+    sed(conf_dir_prefix + 'main/postgresql.conf',
         "#listen_addresses",
         "listen_addresses",
         use_sudo=True)
 
     # restart server
-    sudo('/etc/init.d/postgresql-8.4 restart')
+    sudo('/etc/init.d/postgresql-%s restart || /etc/init.d/postgresql restart ' % version)
 
 
 def initialize_postgres():
     """Initialize the main database."""
+
+    version = sudo("psql --version | grep -ro '[8-9].[0-9]'")
+    conf_dir_prefix = "/etc/postgresql/%s/" % version
+
     # temporarily allow root access from localhost
-    sudo('mv /etc/postgresql/8.4/main/pg_hba.conf /etc/postgresql/8.4/main/pg_hba.conf.bak')
-    sudo('echo "local all postgres ident" > /etc/postgresql/8.4/main/pg_hba.conf')
-    sudo('cat /etc/postgresql/8.4/main/pg_hba.conf.bak >> /etc/postgresql/8.4/main/pg_hba.conf')
-    sudo('service postgresql-8.4 restart')
+    sudo('mv /etc/postgresql/%s/main/pg_hba.conf /etc/postgresql/%s/main/pg_hba.conf.bak' % (version, version))
+    sudo('echo "local all postgres ident" > /etc/postgresql/%s/main/pg_hba.conf' % version)
+    sudo('cat /etc/postgresql/%s/main/pg_hba.conf.bak >> /etc/postgresql/%s/main/pg_hba.conf' % (version, version))
+    sudo('service postgresql-%s restart || /etc/init.d/postgresql restart ' % version)
 
     # set password
     password = prompt('Enter a new database password for user `postgres`:')
@@ -528,8 +535,8 @@ def initialize_postgres():
     sudo("echo '0 7 * * * pg_dumpall --username postgres --file /var/backups/postgresql/postgresql_$(date +%%Y-%%m-%%d).dump' > /etc/cron.d/pg_dump")
 
     # remove temporary root access
-    comment('/etc/postgresql/8.4/main/pg_hba.conf', 'local all postgres ident', use_sudo=True)
-    sudo('service postgresql-8.4 restart')
+    comment('/etc/postgresql/%s/main/pg_hba.conf' % version, 'local all postgres ident', use_sudo=True)
+    sudo('service postgresql%s restart || /etc/init.d/postgresql restart' % version)
 
 
 def install_bacula_master():
