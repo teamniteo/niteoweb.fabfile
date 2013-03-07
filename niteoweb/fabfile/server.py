@@ -639,6 +639,8 @@ def configure_hetzner_backup(duplicityfilelist=None, duplicitysh=None):
     )
 
     # install duplicity and dependencies
+    sudo('add-apt-repository ppa:duplicity-team/ppa')
+    sudo('apt-get update')
     sudo('apt-get -yq install duplicity ncftp')
 
     # what to exclude
