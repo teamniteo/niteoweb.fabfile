@@ -1,3 +1,5 @@
+from cuisine import dir_ensure
+from cuisine import mode_sudo
 from fabric.api import env
 from fabric.api import sudo
 from fabric.contrib.console import confirm
@@ -9,10 +11,7 @@ from fabric.contrib.files import upload_template
 from fabric.context_managers import settings
 from fabric.operations import prompt
 from fabric.contrib.files import comment
-from niteoweb.fabfile import cmd
 from niteoweb.fabfile import err
-from cuisine import dir_ensure
-from cuisine import mode_sudo
 
 import os
 
@@ -69,27 +68,6 @@ def create_projects_group():
     """Create a group that will hold all project users -> users
     that are dedicated for running one project."""
     sudo('addgroup projects')
-
-
-def create_project_user(prod_user):
-    """Add a user for a single project so the entire project can run under this
-    user."""
-
-    opts = dict(
-        prod_user=prod_user or env.prod_user or err("env.prod_user must be set"),
-    )
-
-    # create user
-    sudo('egrep %(prod_user)s /etc/passwd || adduser %(prod_user)s --disabled-password --gecos ""' % opts)
-
-    # add user to `projects` group
-    sudo('gpasswd -a %(prod_user)s projects' % opts)
-
-    # make use of buildout default.cfg
-    if not exists('/home/%(prod_user)s/.buildout' % opts):
-        sudo('mkdir /home/%(prod_user)s/.buildout' % opts)
-        sudo('ln -s /etc/buildout/default.cfg /home/%(prod_user)s/.buildout/default.cfg' % opts)
-        sudo('chown -R %(prod_user)s:%(prod_user)s /home/%(prod_user)s/.buildout' % opts)
 
 
 def harden_sshd():
@@ -179,19 +157,20 @@ def install_system_libs(additional_libs=None):
              'rsync '
              'unzip '
              'screen '
+             'htop '
              'telnet '
              'subversion '
              'build-essential '
-             'python-software-properties '  # to get add-apt-repositories command
-
+             # to get add-apt-repositories command
+             'python-software-properties '
              # imaging, fonts, compression, encryption, etc.
              'libbz2-dev '
              'libfreetype6-dev '
-             'libjpeg-dev ' # deletes jpeg62
+             #'libjpeg-dev '
              'libjpeg62-dev '
              'libldap-dev '
              'libpcre3-dev '
-             'libreadline-dev '  # version 5 not in repo
+             'libreadline-dev ' # version 5 not in repo
              'libsasl2-dev '
              'libssl-dev '
              'libxml2-dev '
@@ -209,6 +188,7 @@ def install_python_26():
     sudo('apt-get update')
     sudo('apt-get -yq install python2.6  python2.6-dev')
 
+
     # install Distribute
     sudo('curl -O http://python-distribute.org/distribute_setup.py')
     sudo('python2.6 distribute_setup.py')
@@ -223,7 +203,7 @@ def install_python_24():
 
     sudo('add-apt-repository ppa:fkrull/deadsnakes')
     sudo('apt-get update')
-    sudo('apt-get -yq install python2.4 python2.4-dev')
+    sudo('apt-get -yq install python2.4  python2.4-dev')
 
     # install Distribute
     sudo('curl -O http://python-distribute.org/distribute_setup.py')
@@ -234,13 +214,32 @@ def install_python_24():
     sudo('easy_install-2.4 virtualenv')
 
 
+def install_python_27():
+    """Install Python 2.7 and tools for it."""
+
+    sudo('add-apt-repository ppa:fkrull/deadsnakes')
+    sudo('apt-get update')
+    sudo('apt-get -yq install python2.7-dev')
+
+    # install Distribute
+    sudo('curl -O http://python-distribute.org/distribute_setup.py')
+    sudo('python2.7 distribute_setup.py')
+    sudo('rm -f distribute*')
+
+    # install virtualenv
+    sudo('easy_install-2.7 virtualenv')
+
+
 def configure_egg_cache():
     """Configure a system-wide egg-cache so we have a local cache
     of eggs that we use in order to add speed and reduncancy to
     zc.buildout."""
 
-    dir_ensure('/etc/buildout/')
-    dir_ensure('/etc/buildout/{downloads,eggs,extends}')
+    with mode_sudo():
+        dir_ensure('/etc/buildout/')
+        dir_ensure('/etc/buildout/downloads')
+        dir_ensure('/etc/buildout/eggs')
+        dir_ensure('/etc/buildout/extends')
     if exists('/etc/buildout/default.cfg'):
         sudo('rm -rf /etc/buildout/default.cfg')
 
@@ -256,7 +255,9 @@ def configure_egg_cache():
 
     # force maintenance users to also use default.cfg (needed when running buildout via Fabric)
     for user in env.admins:
-        dir_ensure('/home/%s/.buildout' % user)
+        with mode_sudo():
+            dir_ensure('/home/%s/.buildout' % user)
+
         if exists('/home/%s/.buildout/default.cfg' % user):
             sudo('rm -rf /home/%s/.buildout/default.cfg' % user)
 
@@ -335,7 +336,7 @@ def install_sendmail(email=None):
     )
 
     # install sendmail
-    sudo('apt-get -yq install sendmail')
+    sudo('apt-get -yq install sendmail sendmail-base sendmail-bin sendmail-cf sensible-mda rmail')
 
     # all email should be sent to maintenance email
     append('/etc/aliases', 'root:           %(email)s' % opts, use_sudo=True)
@@ -464,7 +465,7 @@ def install_munin_node(add_to_master=True):
 
 def install_postgres():
     """Install and configure Postgresql database server."""
-    sudo('apt-get -yq install postgresql-8.4 libpq-dev')
+    sudo('apt-get -yq install postgresql libpq-dev')
     configure_postgres()
     initialize_postgres()
 
@@ -472,35 +473,42 @@ def install_postgres():
 def configure_postgres():
     """Upload Postgres configuration from ``etc/`` and restart the server."""
 
+    version = sudo("psql --version | grep -ro '[8-9].[0-9]'")
+    conf_dir_prefix = "/etc/postgresql/%s/" % version
+
     # pg_hba.conf
-    comment('/etc/postgresql/8.4/main/pg_hba.conf',
+    comment('/etc/postgresql/%s/main/pg_hba.conf' % version,
             'local   all         postgres                          ident',
             use_sudo=True)
-    sed('/etc/postgresql/8.4/main/pg_hba.conf',
+    sed('/etc/postgresql/%s/main/pg_hba.conf' % version,
         'local   all         all                               ident',
         'local   all         all                               md5',
         use_sudo=True)
 
     # postgres.conf
-    uncomment('/etc/postgresql/8.4/main/postgresql.conf', '#autovacuum = on', use_sudo=True)
-    uncomment('/etc/postgresql/8.4/main/postgresql.conf', '#track_activities = on', use_sudo=True)
-    uncomment('/etc/postgresql/8.4/main/postgresql.conf', '#track_counts = on', use_sudo=True)
-    sed('/etc/postgresql/8.4/main/postgresql.conf',
+    uncomment(conf_dir_prefix + 'main/postgresql.conf', '#autovacuum = on', use_sudo=True)
+    uncomment(conf_dir_prefix + 'main/postgresql.conf', '#track_activities = on', use_sudo=True)
+    uncomment(conf_dir_prefix + 'main/postgresql.conf', '#track_counts = on', use_sudo=True)
+    sed(conf_dir_prefix + 'main/postgresql.conf',
         "#listen_addresses",
         "listen_addresses",
         use_sudo=True)
 
     # restart server
-    sudo('/etc/init.d/postgresql-8.4 restart')
+    sudo('/etc/init.d/postgresql-%s restart || /etc/init.d/postgresql restart ' % version)
 
 
 def initialize_postgres():
     """Initialize the main database."""
+
+    version = sudo("psql --version | grep -ro '[8-9].[0-9]'")
+    conf_dir_prefix = "/etc/postgresql/%s/" % version
+
     # temporarily allow root access from localhost
-    sudo('mv /etc/postgresql/8.4/main/pg_hba.conf /etc/postgresql/8.4/main/pg_hba.conf.bak')
-    sudo('echo "local all postgres ident" > /etc/postgresql/8.4/main/pg_hba.conf')
-    sudo('cat /etc/postgresql/8.4/main/pg_hba.conf.bak >> /etc/postgresql/8.4/main/pg_hba.conf')
-    sudo('service postgresql-8.4 restart')
+    sudo('mv /etc/postgresql/%s/main/pg_hba.conf /etc/postgresql/%s/main/pg_hba.conf.bak' % (version, version))
+    sudo('echo "local all postgres ident" > /etc/postgresql/%s/main/pg_hba.conf' % version)
+    sudo('cat /etc/postgresql/%s/main/pg_hba.conf.bak >> /etc/postgresql/%s/main/pg_hba.conf' % (version, version))
+    sudo('service postgresql-%s restart || /etc/init.d/postgresql restart ' % version)
 
     # set password
     password = prompt('Enter a new database password for user `postgres`:')
@@ -514,14 +522,14 @@ def initialize_postgres():
     sudo("echo '0 7 * * * pg_dumpall --username postgres --file /var/backups/postgresql/postgresql_$(date +%%Y-%%m-%%d).dump' > /etc/cron.d/pg_dump")
 
     # remove temporary root access
-    comment('/etc/postgresql/8.4/main/pg_hba.conf', 'local all postgres ident', use_sudo=True)
-    sudo('service postgresql-8.4 restart')
+    comment('/etc/postgresql/%s/main/pg_hba.conf' % version, 'local all postgres ident', use_sudo=True)
+    sudo('service postgresql%s restart || /etc/init.d/postgresql restart' % version)
 
 
 def install_bacula_master():
     """Install and configure Bacula Master."""
     # Official repos only have version 5.0.1, we need 5.0.3
-    #sudo('add-apt-repository ppa:mario-sitz/ppa')
+    sudo('add-apt-repository ppa:mario-sitz/ppa')
     sudo('apt-get update')
     sudo('apt-get -yq install bacula-console bacula-director-pgsql bacula-sd-pgsql')
 
@@ -540,6 +548,8 @@ def configure_bacula_master(path=None):
         path=path or env.get('path') or err('env.path must be set'),
     )
 
+    # XXX: Shouldn't we set file owner to bacula user, not the current user,
+    # running the fabric commands?
     upload_template('%(path)s/etc/bacula-dir.conf' % opts,
                     '/etc/bacula/bacula-dir.conf',
                     use_sudo=True)
@@ -579,13 +589,14 @@ def install_bacula_client():
 
 
 def configure_bacula_client(path=None):
-    """Upload configuration for Bacula File Deamon (client)
-    and restart it."""
+    """Upload configuration for Bacula File Deamon (client) and restart it."""
     opts = dict(
         path=path or env.get('path') or err('env.path must be set'),
     )
 
-    upload_template('%(path)s/etc/bacula-fd.conf' % opts, '/etc/bacula/bacula-fd.conf', use_sudo=True)
+    upload_template(
+        '%(path)s/etc/bacula-fd.conf' % opts,
+        '/etc/bacula/bacula-fd.conf', use_sudo=True)
     sudo('service bacula-fd restart')
 
 
@@ -598,12 +609,20 @@ def add_to_bacula_master(shortname=None, path=None, bacula_host_string=None):
     )
 
     with settings(host_string=opts['bacula_host_string']):
-
         # upload project-specific configuration
         upload_template(
-            '%(path)s/etc/bacula-master.conf' % opts,
+            '%(path)s/etc/bacula-client.conf' % opts,
             '/etc/bacula/clients/%(shortname)s.conf' % opts,
             use_sudo=True)
+
+        # Create a file that will contain a list of files to backup for this
+        # server (a fileset) - this file is updated automatically by every
+        # project installed on this server (check add_files_to_backup in
+        # project.py)
+        fileset_path = '/etc/bacula/clients/%(shortname)s-fileset.txt' % opts
+        if not exists(fileset_path):
+            sudo('touch %s' % fileset_path)
+            sudo('chown bacula %s' % fileset_path)
 
         # reload bacula master configuration
         sudo("service bacula-director restart")
@@ -616,15 +635,24 @@ def configure_hetzner_backup(duplicityfilelist=None, duplicitysh=None):
         duplicityfilelist=duplicityfilelist or env.get('duplicityfilelist') or '%s/etc/duplicityfilelist.conf' % os.getcwd(),
         duplicitysh=duplicitysh or env.get('duplicitysh') or '%s/etc/duplicity.sh' % os.getcwd(),
     )
-
     # install duplicity and dependencies
+    sudo('add-apt-repository ppa:duplicity-team/ppa')
+    sudo('apt-get update')
     sudo('apt-get -yq install duplicity ncftp')
 
     # what to exclude
-    upload_template(opts['duplicityfilelist'], '/etc/duplicityfilelist.conf', use_sudo=True)
+    upload_template(
+        opts['duplicityfilelist'],
+        '/etc/duplicityfilelist.conf',
+        use_sudo=True
+    )
 
     # script for running Duplicity
-    upload_template(opts['duplicitysh'], '/usr/sbin/duplicity.sh', use_sudo=True)
+    upload_template(
+        opts['duplicitysh'],
+        '/usr/sbin/duplicity.sh',
+        use_sudo=True
+    )
     sudo('chmod +x /usr/sbin/duplicity.sh')
 
     # cronjob
@@ -667,6 +695,7 @@ def configure_racoon(racoonconf=None, psktxt=None):
     sudo('chmod -R 700 /etc/racoon/')
 
     sudo('service racoon restart')
+
 
 def install_java():
     """Install java from webupd8 repository."""
