@@ -212,6 +212,22 @@ def install_python_24():
     sudo('easy_install-2.4 virtualenv')
 
 
+def install_python_27():
+    """Install Python 2.7 and tools for it."""
+
+    sudo('add-apt-repository ppa:fkrull/deadsnakes')
+    sudo('apt-get update')
+    sudo('apt-get -yq install python2.7-dev')
+
+    # install Distribute
+    sudo('curl -O http://python-distribute.org/distribute_setup.py')
+    sudo('python2.7 distribute_setup.py')
+    sudo('rm -f distribute*')
+
+    # install virtualenv
+    sudo('easy_install-2.7 virtualenv')
+
+
 def configure_egg_cache():
     """Configure a system-wide egg-cache so we have a local cache
     of eggs that we use in order to add speed and reduncancy to
@@ -455,35 +471,42 @@ def install_postgres():
 def configure_postgres():
     """Upload Postgres configuration from ``etc/`` and restart the server."""
 
+    version = sudo("psql --version | grep -ro '[8-9].[0-9]'")
+    conf_dir_prefix = "/etc/postgresql/%s/" % version
+
     # pg_hba.conf
-    comment('/etc/postgresql/8.4/main/pg_hba.conf',
+    comment('/etc/postgresql/%s/main/pg_hba.conf' % version,
             'local   all         postgres                          ident',
             use_sudo=True)
-    sed('/etc/postgresql/8.4/main/pg_hba.conf',
+    sed('/etc/postgresql/%s/main/pg_hba.conf' % version,
         'local   all         all                               ident',
         'local   all         all                               md5',
         use_sudo=True)
 
     # postgres.conf
-    uncomment('/etc/postgresql/8.4/main/postgresql.conf', '#autovacuum = on', use_sudo=True)
-    uncomment('/etc/postgresql/8.4/main/postgresql.conf', '#track_activities = on', use_sudo=True)
-    uncomment('/etc/postgresql/8.4/main/postgresql.conf', '#track_counts = on', use_sudo=True)
-    sed('/etc/postgresql/8.4/main/postgresql.conf',
+    uncomment(conf_dir_prefix + 'main/postgresql.conf', '#autovacuum = on', use_sudo=True)
+    uncomment(conf_dir_prefix + 'main/postgresql.conf', '#track_activities = on', use_sudo=True)
+    uncomment(conf_dir_prefix + 'main/postgresql.conf', '#track_counts = on', use_sudo=True)
+    sed(conf_dir_prefix + 'main/postgresql.conf',
         "#listen_addresses",
         "listen_addresses",
         use_sudo=True)
 
     # restart server
-    sudo('/etc/init.d/postgresql-8.4 restart')
+    sudo('/etc/init.d/postgresql-%s restart || /etc/init.d/postgresql restart ' % version)
 
 
 def initialize_postgres():
     """Initialize the main database."""
+
+    version = sudo("psql --version | grep -ro '[8-9].[0-9]'")
+    conf_dir_prefix = "/etc/postgresql/%s/" % version
+
     # temporarily allow root access from localhost
-    sudo('mv /etc/postgresql/8.4/main/pg_hba.conf /etc/postgresql/8.4/main/pg_hba.conf.bak')
-    sudo('echo "local all postgres ident" > /etc/postgresql/8.4/main/pg_hba.conf')
-    sudo('cat /etc/postgresql/8.4/main/pg_hba.conf.bak >> /etc/postgresql/8.4/main/pg_hba.conf')
-    sudo('service postgresql-8.4 restart')
+    sudo('mv /etc/postgresql/%s/main/pg_hba.conf /etc/postgresql/%s/main/pg_hba.conf.bak' % (version, version))
+    sudo('echo "local all postgres ident" > /etc/postgresql/%s/main/pg_hba.conf' % version)
+    sudo('cat /etc/postgresql/%s/main/pg_hba.conf.bak >> /etc/postgresql/%s/main/pg_hba.conf' % (version, version))
+    sudo('service postgresql-%s restart || /etc/init.d/postgresql restart ' % version)
 
     # set password
     password = prompt('Enter a new database password for user `postgres`:')
@@ -497,8 +520,8 @@ def initialize_postgres():
     sudo("echo '0 7 * * * pg_dumpall --username postgres --file /var/backups/postgresql/postgresql_$(date +%%Y-%%m-%%d).dump' > /etc/cron.d/pg_dump")
 
     # remove temporary root access
-    comment('/etc/postgresql/8.4/main/pg_hba.conf', 'local all postgres ident', use_sudo=True)
-    sudo('service postgresql-8.4 restart')
+    comment('/etc/postgresql/%s/main/pg_hba.conf' % version, 'local all postgres ident', use_sudo=True)
+    sudo('service postgresql%s restart || /etc/init.d/postgresql restart' % version)
 
 
 def install_bacula_master():
@@ -523,7 +546,7 @@ def configure_bacula_master(path=None):
         path=path or env.get('path') or err('env.path must be set'),
     )
 
-    # XXX: Shouldn't we set file owner to bacula user, not the current user, 
+    # XXX: Shouldn't we set file owner to bacula user, not the current user,
     # running the fabric commands?
     upload_template('%(path)s/etc/bacula-dir.conf' % opts,
                     '/etc/bacula/bacula-dir.conf',
@@ -588,7 +611,7 @@ def add_to_bacula_master(shortname=None, path=None, bacula_host_string=None):
             '/etc/bacula/clients/%(shortname)s.conf' % opts,
             use_sudo=True)
 
-        # Create a file that will contain a list of files to backup for this 
+        # Create a file that will contain a list of files to backup for this
         # server (a fileset) - this file is updated automatically by every project
         # installed on this server (check add_files_to_backup in project.py)
         fileset_path = '/etc/bacula/clients/%(shortname)s-fileset.txt' % opts
@@ -608,6 +631,8 @@ def configure_hetzner_backup(duplicityfilelist=None, duplicitysh=None):
         duplicitysh=duplicitysh or env.get('duplicitysh') or '%s/etc/duplicity.sh' % os.getcwd(),
     )
     # install duplicity and dependencies
+    sudo('add-apt-repository ppa:duplicity-team/ppa')
+    sudo('apt-get update')
     sudo('apt-get -yq install duplicity ncftp')
 
     # what to exclude
@@ -657,3 +682,10 @@ def configure_racoon(racoonconf=None, psktxt=None):
     sudo('chmod -R 700 /etc/racoon/')
 
     sudo('service racoon restart')
+
+def install_java():
+    """Install java from webupd8 repository."""
+    sudo("apt-get -yq install python-software-properties")
+    sudo("add-apt-repository ppa:webupd8team/java")
+    sudo("apt-get update")
+    sudo("apt-get -yq install oracle-java7-installer")

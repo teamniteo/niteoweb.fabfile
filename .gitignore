@@ -6,3 +6,7 @@ docs/html
 docs/make.bat
 include
 lib
+
+# ignore egg-info dir
+
+/niteoweb.fabfile.egg-info
