@@ -11,7 +11,6 @@ from fabric.contrib.files import upload_template
 from fabric.context_managers import settings
 from fabric.operations import prompt
 from fabric.contrib.files import comment
-from niteoweb.fabfile import cmd
 from niteoweb.fabfile import err
 
 import os
@@ -162,8 +161,8 @@ def install_system_libs(additional_libs=None):
              'telnet '
              'subversion '
              'build-essential '
-             'python-software-properties '  # to get add-apt-repositories command
-
+             # to get add-apt-repositories command
+             'python-software-properties '
              # imaging, fonts, compression, encryption, etc.
              'libbz2-dev '
              'libfreetype6-dev '
@@ -592,7 +591,9 @@ def configure_bacula_client(path=None):
         path=path or env.get('path') or err('env.path must be set'),
     )
 
-    upload_template('%(path)s/etc/bacula-fd.conf' % opts, '/etc/bacula/bacula-fd.conf', use_sudo=True)
+    upload_template(
+        '%(path)s/etc/bacula-fd.conf' % opts,
+        '/etc/bacula/bacula-fd.conf', use_sudo=True)
     sudo('service bacula-fd restart')
 
 
@@ -612,8 +613,9 @@ def add_to_bacula_master(shortname=None, path=None, bacula_host_string=None):
             use_sudo=True)
 
         # Create a file that will contain a list of files to backup for this
-        # server (a fileset) - this file is updated automatically by every project
-        # installed on this server (check add_files_to_backup in project.py)
+        # server (a fileset) - this file is updated automatically by every
+        # project installed on this server (check add_files_to_backup in
+        # project.py)
         fileset_path = '/etc/bacula/clients/%(shortname)s-fileset.txt' % opts
         if not exists(fileset_path):
             sudo('touch %s' % fileset_path)
@@ -636,10 +638,18 @@ def configure_hetzner_backup(duplicityfilelist=None, duplicitysh=None):
     sudo('apt-get -yq install duplicity ncftp')
 
     # what to exclude
-    upload_template(opts['duplicityfilelist'], '/etc/duplicityfilelist.conf', use_sudo=True)
+    upload_template(
+        opts['duplicityfilelist'],
+        '/etc/duplicityfilelist.conf',
+        use_sudo=True
+    )
 
     # script for running Duplicity
-    upload_template(opts['duplicitysh'], '/usr/sbin/duplicity.sh', use_sudo=True)
+    upload_template(
+        opts['duplicitysh'],
+        '/usr/sbin/duplicity.sh',
+        use_sudo=True
+    )
     sudo('chmod +x /usr/sbin/duplicity.sh')
 
     # cronjob
@@ -682,6 +692,7 @@ def configure_racoon(racoonconf=None, psktxt=None):
     sudo('chmod -R 700 /etc/racoon/')
 
     sudo('service racoon restart')
+
 
 def install_java():
     """Install java from webupd8 repository."""

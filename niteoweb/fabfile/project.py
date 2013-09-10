@@ -1,5 +1,3 @@
-from cuisine import dir_ensure
-from cuisine import mode_sudo
 from fabric.api import cd
 from fabric.api import env
 from fabric.api import get
@@ -11,7 +9,6 @@ from fabric.contrib.files import append
 from fabric.contrib.files import exists
 from fabric.contrib.files import upload_template
 from fabric.contrib.project import rsync_project
-from niteoweb.fabfile import cmd
 from niteoweb.fabfile import err
 
 import os
