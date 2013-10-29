@@ -187,11 +187,11 @@ def install_system_libs(additional_libs=None):
              # imaging, fonts, compression, encryption, etc.
              'libbz2-dev '
              'libfreetype6-dev '
-             'libjpeg-dev '
+             'libjpeg-dev '  # deletes jpeg62
              'libjpeg62-dev '
              'libldap-dev '
              'libpcre3-dev '
-             'libreadline5-dev '
+             'libreadline-dev '
              'libsasl2-dev '
              'libssl-dev '
              'libxml2-dev '
@@ -204,8 +204,9 @@ def install_system_libs(additional_libs=None):
 
 def install_python_26():
     """Install Python 2.6 and tools for it."""
-    # Python 2.6 is already installed by default, we just add compile headers
-    sudo('apt-get -yq install python2.6-dev')
+    sudo('add-apt-repository ppa:fkrull/deadsnakes')
+    sudo('apt-get update')
+    sudo('apt-get -yq install python2.6 python2.6-dev')
 
     # install Distribute
     sudo('curl -O http://python-distribute.org/distribute_setup.py')
@@ -221,7 +222,7 @@ def install_python_24():
 
     sudo('add-apt-repository ppa:fkrull/deadsnakes')
     sudo('apt-get update')
-    sudo('apt-get -yq install python2.4-dev')
+    sudo('apt-get -yq install python2.4 python2.4-dev')
 
     # install Distribute
     sudo('curl -O http://python-distribute.org/distribute_setup.py')
@@ -591,8 +592,6 @@ def install_bacula_client():
     instructions from Bacula master and backups critical data
     when told to do so."""
 
-    # Official repos only have version 5.0.1, we need 5.0.3
-    sudo('add-apt-repository ppa:mario-sitz/ppa')
     sudo('apt-get update')
     sudo('apt-get -yq install bacula-fd')
 
