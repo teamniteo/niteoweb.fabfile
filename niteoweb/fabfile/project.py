@@ -5,13 +5,33 @@ from fabric.api import local
 from fabric.api import settings
 from fabric.api import sudo
 from fabric.contrib.console import confirm
+from fabric.contrib.files import append
 from fabric.contrib.files import exists
 from fabric.contrib.files import upload_template
 from fabric.contrib.project import rsync_project
-from niteoweb.fabfile import cmd
 from niteoweb.fabfile import err
 
 import os
+
+
+def create_project_user(prod_user=None):
+    """Add a user for a single project so the entire project can run under this
+    user."""
+
+    opts = dict(
+        prod_user=prod_user or env.prod_user or err("env.prod_user must be set"),
+    )
+
+    # create user
+    sudo('egrep %(prod_user)s /etc/passwd || adduser %(prod_user)s --disabled-password --gecos ""' % opts)
+
+    # add user to `projects` group
+    sudo('gpasswd -a %(prod_user)s projects' % opts)
+
+    # make use of buildout default.cfg
+    sudo('mkdir /home/%(prod_user)s/.buildout' % opts)
+    sudo('ln -s /etc/buildout/default.cfg /home/%(prod_user)s/.buildout/default.cfg' % opts)
+    sudo('chown -R %(prod_user)s:%(prod_user)s /home/%(prod_user)s/.buildout' % opts)
 
 
 def configure_nginx(shortname=None):
@@ -47,7 +67,26 @@ def enable_nginx_config(shortname=None):
     sudo('service nginx reload')
 
 
-def download_code(shortname=None, prod_user=None, svn_params=None, svn_url=None, svn_repo=None, svn_dir=None):
+def add_files_to_backup(host_shortname=None, bacula_ip=None, bacula_fileset=None):
+    """Append a list of project files to backup to this host's fileset."""
+    opts = dict(
+        host_shortname=host_shortname or env.host_shortname or err("env.host_shortname must be set"),
+        bacula_ip=bacula_ip or env.get('bacula_ip') or err("env.bacula_ip must be set"),
+        bacula_fileset=bacula_fileset or env.get('bacula_fileset') or '%s/etc/bacula-fileset.txt' % os.getcwd(),
+    )
+
+    with settings(host_string=opts['bacula_ip']):
+        append(
+            '/etc/bacula/clients/%(host_shortname)s-fileset.txt' % env,
+            open(opts['bacula_fileset']).read(),
+            use_sudo=True
+        )
+
+        # reload bacula master configuration
+        sudo("service bacula-director restart")
+
+
+def download_code(shortname=None, prod_user=None, svn_command=None, svn_params=None, svn_url=None, svn_repo=None, svn_dir=None):
     """Pull project code from code repository."""
     opts = dict(
         shortname=shortname or env.get('shortname'),
@@ -55,6 +94,7 @@ def download_code(shortname=None, prod_user=None, svn_params=None, svn_url=None,
     )
 
     more_opts = dict(
+        svn_command=svn_command or env.get('svn_command') or 'export',
         svn_params=svn_params or env.get('svn_params') or '--force --no-auth-cache',
         svn_url=svn_url or env.get('svn_url') or 'https://niteoweb.repositoryhosting.com/svn',
         svn_repo=svn_repo or env.get('svn_repo') or 'niteoweb_%(shortname)s' % opts,
@@ -64,7 +104,7 @@ def download_code(shortname=None, prod_user=None, svn_params=None, svn_url=None,
 
     with cd('/home/%(prod_user)s' % opts):
         sudo(
-            'svn export %(svn_params)s %(svn_url)s/%(svn_repo)s/%(svn_dir)s ./' % opts,
+            'svn %(svn_command)s %(svn_params)s %(svn_url)s/%(svn_repo)s/%(svn_dir)s ./' % opts,
             user=opts['prod_user']
         )
 
@@ -105,71 +145,86 @@ def run_buildout(prod_user=None, production_cfg=None):
     sudo('chmod -R 775 /etc/buildout/{eggs,downloads,extends}')
 
 
-def upload_data(prod_user=None):
+def upload_data(prod_user=None, path=None, zodb_files=None, blob_folders=None):
     """Upload Zope's data to the server."""
-
-    if not env.get('confirm'):
-        confirm("This will destroy all current Zope data on the server. " \
-        "Are you sure you want to continue?")
-
-    upload_zodb(prod_user)
-    upload_blobs(prod_user)
+    upload_zodb(prod_user, path, zodb_files)
+    upload_blobs(prod_user, path, blob_folders)
 
 
-def upload_zodb(prod_user=None, path=None):
+def upload_zodb(prod_user=None, path=None, zodb_files=None):
     """Upload ZODB part of Zope's data to the server."""
     opts = dict(
         prod_user=prod_user or env.get('prod_user'),
-        path=path or env.get('path') or os.getcwd()
+        path=path or env.get('path') or os.getcwd(),
     )
+    zodb_files = zodb_files or env.get('zodb_files') or ['Data.fs']
+    confirmed = env.get('confirm') or confirm("This will destroy the current" \
+        " zodb file(s) on the server. Are you sure you want to continue?")
 
-    # _verify_env(['prod_user', 'path', ])
-
-    if not env.get('confirm'):
-        confirm("This will destroy the current Data.fs file on the server. " \
-        "Are you sure you want to continue?")
+    if not confirmed:
+        return
 
     with cd('/home/%(prod_user)s/var/filestorage' % opts):
+        for filename in zodb_files:
+            opts['filename'] = filename
 
-        # remove temporary BLOBs from previous uploads
-        if exists('/tmp/Data.fs'):
-            sudo('rm -rf /tmp/Data.fs')
+            # backup current database
+            if exists(filename):
+                # remove the previous backup
+                sudo('rm -rf %(filename)s.bak' % opts)
 
-        # upload Data.fs to server and set production user as it's owner
-        upload_template(
-            filename='%(path)s/var/filestorage/Data.fs' % opts,
-            destination='Data.fs',
-            use_sudo=True
-        )
-        sudo('chown -R %(prod_user)s:%(prod_user)s Data.fs' % opts)
+                # create a backup
+                sudo('mv %(filename)s %(filename)s.bak' % opts)
+
+            # remove temporary zodb file(s) from previous uploads
+            if exists('/tmp/%(filename)s' % opts):
+                sudo('rm -rf /tmp/%(filename)s' % opts)
+
+            # upload zodb file(s)to server and set production user as the owner
+            upload_template(
+                filename='%(path)s/var/filestorage/%(filename)s' % opts,
+                destination=filename,
+                use_sudo=True
+            )
+            sudo('chown -R %(prod_user)s:%(prod_user)s %(filename)s' % opts)
+            if exists('/home/%(prod_user)s/var/filestorage/%(filename)s.bak' % opts):
+                sudo('chown -R %(prod_user)s:%(prod_user)s %(filename)s.bak' % opts)
 
 
-def upload_blobs(prod_user=None, path=None):
+def upload_blobs(prod_user=None, path=None, blob_folders=None):
     """Upload BLOB part of Zope's data to the server."""
     opts = dict(
         prod_user=prod_user or env.get('prod_user'),
-        path=path or env.get('path') or os.getcwd()
+        path=path or env.get('path') or os.getcwd(),
     )
+    blob_folders = blob_folders or env.get('blob_folders') or ['blobstorage']
+    confirmed = env.get('confirm') or confirm("This will destroy all current" \
+        " BLOB files on the server. Are you sure you want to continue?")
 
-    if not env.get('confirm'):
-        confirm("This will destroy all current BLOB files on the server. " \
-        "Are you sure you want to continue?")
+    if not confirmed:
+        return
 
     with cd('/home/%(prod_user)s/var' % opts):
+        for folder in blob_folders:
+            opts['folder'] = folder
 
-        # backup current BLOBs
-        if exists('blobstorage'):
-            sudo('mv blobstorage blobstorage.bak')
+            # backup current BLOBs
+            if exists(folder):
+                # remove the previous backup
+                sudo('rm -rf %(folder)s.bak' % opts)
 
-        # remove temporary BLOBs from previous uploads
-        if exists('/tmp/blobstorage'):
-            sudo('rm -rf /tmp/blobstorage')
+                # create a backup
+                sudo('mv %(folder)s %(folder)s.bak' % opts)
 
-        # upload BLOBs to the server and move them to their place
-        rsync_project('/tmp', local_dir='%(path)s/var/blobstorage' % opts)
-        sudo('mv /tmp/blobstorage ./')
-        sudo('chown -R %(prod_user)s:%(prod_user)s blobstorage' % opts)
-        sudo('chmod -R 700 blobstorage')
+            # remove temporary BLOBs from previous uploads
+            if exists('/tmp/%(folder)s' % opts):
+                sudo('rm -rf /tmp/%(folder)s' % opts)
+
+            # upload BLOBs to the server and move them to their place
+            rsync_project('/tmp', local_dir='%(path)s/var/%(folder)s' % opts)
+            sudo('mv /tmp/%(folder)s ./' % opts)
+            sudo('chown -R %(prod_user)s:%(prod_user)s %(folder)s' % opts)
+            sudo('chmod -R 700 %(folder)s' % opts)
 
 
 def start_supervisord(prod_user=None):
@@ -185,22 +240,27 @@ def start_supervisord(prod_user=None):
 
 def supervisorctl(*cmd):
     """Runs an arbitrary supervisorctl command."""
-    with cd('/home/%(prod_user)s' % env):
+    opts = dict(
+        prod_user=env.get('prod_user'),
+    )
+    with cd('/home/%(prod_user)s' % opts):
         sudo('bin/supervisorctl ' + ' '.join(cmd), user=env.prod_user)
 
 
 def download_data():
-    """Download Zope's Data.fs from the server."""
+    """Download Zope's Data.fs and blobstorage from the server."""
 
-    if not env.get('confirm'):
-        confirm("This will destroy all current Zope data on your local machine. " \
-                "Are you sure you want to continue?")
+    confirmed = env.get('confirm') or confirm("This will destroy all current" \
+        " Zope data on your local machine. Are you sure you want to continue?")
+
+    if not confirmed:
+        return
 
     with cd('/home/%(prod_user)s/var' % env):
 
         ### Downlaod Data.fs ###
         # backup current Data.fs
-        if os.path.exists('filestorage/Data.fs'):
+        if os.path.exists('%(path)s/var/filestorage/Data.fs' % env):
             local('mv %(path)s/var/filestorage/Data.fs %(path)s/var/filestorage/Data.fs.bak' % env)
 
         # remove temporary Data.fs file from previous downloads

@@ -65,8 +65,16 @@ Changelog
 2.1 (2011-11-15)
 ----------------
 
+- Fixed upload_zodb, upload_blobs and upload_data methods - data was uploaded
+  even if you selected 'no' when asked if you want to proceed.
+  [jcerjak]
+
+- Created an utils module that contains methods for running the fabric commands 
+  with resume support.
+  [jcerjak]
+
 - Lots of minor bugfixes.
-  [zupo]
+  [zupo, jcerjak]
 
 - You can now specify python version that is used for bootstraping buildout.
   [zupo]
