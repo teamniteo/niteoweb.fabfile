@@ -62,7 +62,7 @@ def download_code(shortname=None, prod_user=None, svn_params=None, svn_url=None,
     )
     opts.update(more_opts)
 
-    with cd('/home/%(prod_user)s' % opts):
+    with cd('/home/%(prod_user)s/niteoweb.%(shortname)s' % opts):
         sudo(
             'svn export %(svn_params)s %(svn_url)s/%(svn_repo)s/%(svn_dir)s ./' % opts,
             user=opts['prod_user']
@@ -79,7 +79,7 @@ def prepare_buildout(prod_user=None, python_version=None, production_cfg=None):
         production_cfg=production_cfg or env.get('production_cfg') or 'production.cfg',
     )
 
-    with cd('/home/%(prod_user)s' % opts):
+    with cd('/home/%(prod_user)s/niteoweb.%(shortname)s' % opts):
         sudo(
             'virtualenv -p python%(python_version)s --no-site-packages ./' % opts,
             user=opts['prod_user']
@@ -96,7 +96,7 @@ def run_buildout(prod_user=None, production_cfg=None):
         production_cfg=production_cfg or env.get('production_cfg') or 'production.cfg',
     )
 
-    with cd('/home/%(prod_user)s' % opts):
+    with cd('/home/%(prod_user)s/niteoweb.%(shortname)s' % opts):
         sudo('bin/buildout -c %(production_cfg)s' % opts, user=opts['prod_user'])
 
     # allow everyone in group `projects` to use what you have just put inside
@@ -129,7 +129,7 @@ def upload_zodb(prod_user=None, path=None):
         confirm("This will destroy the current Data.fs file on the server. " \
         "Are you sure you want to continue?")
 
-    with cd('/home/%(prod_user)s/var/filestorage' % opts):
+    with cd('/home/%(prod_user)s/niteoweb.%(shortname)s/var/filestorage' % opts):
 
         # remove temporary BLOBs from previous uploads
         if exists('/tmp/Data.fs'):
@@ -155,7 +155,7 @@ def upload_blobs(prod_user=None, path=None):
         confirm("This will destroy all current BLOB files on the server. " \
         "Are you sure you want to continue?")
 
-    with cd('/home/%(prod_user)s/var' % opts):
+    with cd('/home/%(prod_user)s/niteoweb.%(shortname)s/var' % opts):
 
         # backup current BLOBs
         if exists('blobstorage'):
@@ -179,13 +179,13 @@ def start_supervisord(prod_user=None):
         prod_user=prod_user or env.get('prod_user'),
     )
 
-    with cd('/home/%(prod_user)s' % opts):
+    with cd('/home/%(prod_user)s/niteoweb.%(shortname)s' % opts):
         sudo('bin/supervisord', user=opts['prod_user'])
 
 
 def supervisorctl(*cmd):
     """Runs an arbitrary supervisorctl command."""
-    with cd('/home/%(prod_user)s' % env):
+    with cd('/home/%(prod_user)s/niteoweb.%(shortname)s' % env):
         sudo('bin/supervisorctl ' + ' '.join(cmd), user=env.prod_user)
 
 
@@ -196,7 +196,7 @@ def download_data():
         confirm("This will destroy all current Zope data on your local machine. " \
                 "Are you sure you want to continue?")
 
-    with cd('/home/%(prod_user)s/var' % env):
+    with cd('/home/%(prod_user)s/niteoweb.%(shortname)s/var' % env):
 
         ### Downlaod Data.fs ###
         # backup current Data.fs
