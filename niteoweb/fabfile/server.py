@@ -304,6 +304,8 @@ def install_unattended_upgrades(email=None):
            'APT::Periodic::Unattended-Upgrade "1";',
            use_sudo=True)
 
+    sudo('rkhunter --propupd')
+
 
 def raid_monitoring(email=None):
     """Configure monitoring of our RAID-1 field. If anything goes wrong,
