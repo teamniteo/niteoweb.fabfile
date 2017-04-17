@@ -187,11 +187,8 @@ def install_system_libs(additional_libs=None):
              # imaging, fonts, compression, encryption, etc.
              'libbz2-dev '
              'libfreetype6-dev '
-             'libjpeg-dev '
-             'libjpeg62-dev '
              'libldap-dev '
              'libpcre3-dev '
-             'libreadline5-dev '
              'libsasl2-dev '
              'libssl-dev '
              'libxml2-dev '
